@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>🚀 Real-Debrid Manager - Ultimate Hybrid Edition</title>
+    <title>🚀 RDMex</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap:; connect-src 'self' https://api.real-debrid.com https://raw.githubusercontent.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
+
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
     <style>
@@ -15,11 +19,10 @@
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <!-- [수정됨] 트래픽 표시 UI 제거 -->
+    <!-- Header -->
     <div class="bg-gradient-to-r from-blue-600 to-purple-800 text-white p-4 shadow-md flex justify-between items-start">
       <div>
-        <h1 class="text-2xl font-bold flex items-center"><i class="fas fa-rocket mr-3"></i>Real-Debrid Manager Ultimate</h1>
-        <p class="mt-1 opacity-90">마그넷 & 토렌트 관리 (통합 트래커 자동 로딩)</p>
+        <h1 class="text-2xl font-bold flex items-center"><i class="fas fa-rocket mr-3"></i>RDMex</h1>
       </div>
       <div class="text-right opacity-90">
         <span id="apiListSize" class="block text-xl font-bold mt-1"></span>
@@ -27,33 +30,37 @@
     </div>
 
     <div class="container mx-auto px-4 md:px-6 py-8 max-w-7xl">
+      <!-- Input Section -->
       <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-        <h2 class="text-2xl font-semibold mb-6 flex items-center text-gray-800 border-b pb-4"><i class="fas fa-plus-circle mr-3 text-blue-500"></i>새 토렌트 추가</h2>
-        <p class="text-gray-600 mb-4">마그넷 링크를 붙여넣거나 토렌트 파일을 선택하세요. 최신 통합 트래커 목록이 자동으로 적용됩니다.</p>
-        <label for="magnetInput" class="block text-sm font-medium text-gray-700 mb-1">마그넷 링크</label>
-        <textarea id="magnetInput" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="핵심 마그넷 링크(magnet:?xt=...)를 한 줄에 하나씩 입력..."></textarea>
-        <div class="my-4 flex items-center text-gray-500"><span class="flex-grow bg-gray-200 h-px"></span><span class="mx-4 font-semibold">또는</span><span class="flex-grow bg-gray-200 h-px"></span></div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">토렌트 파일</label>
-        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center" id="dropZone">
-          <input type="file" id="torrentFile" accept=".torrent" class="hidden" onchange="displayFileName()" />
-          <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
-          <p class="text-gray-600" id="fileInfo">여기에 .torrent 파일을 드래그 앤 드롭 하거나, 클릭하여 선택하세요.</p>
+        <div class="flex flex-col md:flex-row gap-6">
+            <div class="flex-1">
+                <textarea id="magnetInput" rows="5" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="magnet:?xt=...를 한 줄에 하나씩 입력..."></textarea>
+            </div>
+            <div class="flex-1">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center h-full flex flex-col justify-center items-center" id="dropZone">
+                    <input type="file" id="torrentFile" accept=".torrent" class="hidden" onchange="displayFileName()" />
+                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600" id="fileInfo">.torrent 파일을 드래그 앤 드롭 하거나, 클릭.</p>
+                </div>
+            </div>
         </div>
         <div class="mt-6">
           <div class="flex justify-between items-center mb-1">
             <label for="trackerInput" class="block text-sm font-medium text-gray-700 flex items-center">
                 <i class="fas fa-satellite-dish mr-2 text-purple-500"></i>
-                추가 트래커 (마그넷 전용)
                 <span id="trackerStatusIcon" class="ml-2"></span>
-                <span id="trackerUpdateTime" class="text-xs text-gray-500 ml-3 font-normal"></span>
+                <span id="trackerUpdateTime" class="text-lg font-bold text-gray-700 ml-3"></span>
             </label>
-            <button onclick="fetchBestTrackers(this)" id="fetchTrackerButton" class="px-3 py-1 bg-purple-600 text-white text-xs font-semibold rounded hover:bg-purple-700 flex items-center transition-colors"><i class="fas fa-sync-alt mr-2"></i><span>최신으로 업데이트</span><i class="fas fa-spinner loading ml-2 hidden"></i></button>
           </div>
-          <textarea id="trackerInput" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="최신 통합 트래커 목록을 자동으로 불러오는 중입니다..."></textarea>
-          <p class="text-xs text-gray-500 mt-1">입력된 트래커는 모든 마그넷 링크에 추가됩니다.</p>
+          <div class="relative">
+            <textarea id="trackerInput" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 pr-40" placeholder="최신 통합 트래커 목록을 자동으로 불러오는 중입니다..."></textarea>
+            <button onclick="fetchBestTrackers(this)" id="fetchTrackerButton" class="absolute top-1/2 right-3 transform -translate-y-1/2 px-3 py-1 bg-purple-600 text-white text-xs font-semibold rounded hover:bg-purple-700 flex items-center transition-colors"><i class="fas fa-sync-alt mr-2"></i><span>최신으로 업데이트</span><i class="fas fa-spinner loading ml-2 hidden"></i></button>
+          </div>
         </div>
         <button onclick="handleUnifiedUpload(this)" id="unifiedUploadButton" class="w-full mt-6 px-4 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-200 flex items-center justify-center text-lg"><i class="fas fa-upload mr-2"></i><span>추가하기</span><i class="fas fa-spinner loading ml-2 hidden"></i></button>
       </div>
+
+      <!-- Torrent List Section -->
       <div class="bg-white rounded-lg shadow-lg mb-8 relative" style="height: 600px">
         <div class="absolute top-0 left-0 right-0 p-6 h-20 border-b"><h2 class="text-xl font-semibold flex items-center justify-center text-gray-800 h-full"><i class="fas fa-list mr-2 text-blue-500"></i>토렌트 목록</h2></div>
         <div class="absolute top-20 bottom-20 left-0 right-0 overflow-y-auto p-4"><div id="torrentList" class="space-y-3"><p class="text-gray-500 text-center py-8">토렌트 목록을 불러오려면 새로고침 버튼을 클릭하세요.</p></div></div>
@@ -64,444 +71,148 @@
             </div>
         </div>
       </div>
+      
+      <!-- Log Section -->
       <div class="bg-white rounded-lg shadow-lg p-6">
         <h2 class="text-xl font-semibold mb-4 flex items-center text-gray-800"><i class="fas fa-info-circle mr-2 text-blue-500"></i>상태 및 로그</h2>
         <div id="statusLog" class="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto"><p id="initialLogMessage" class="text-gray-500">준비 완료.</p></div>
       </div>
+      
+      <!-- API Section -->
       <div class="bg-white rounded-lg shadow-lg p-6 mt-8">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold flex items-center text-gray-800"><i class="fas fa-key mr-2 text-yellow-500"></i>API 토큰 설정</h2>
-            <div class="text-right">
-                <span id="apiStartDate" class="text-sm text-gray-600"></span>
-                <span id="apiStatus" class="block text-base"></span>
-                <span id="apiPoints" class="block text-base"></span>
-            </div>
+            <h2 class="text-xl font-semibold flex items-center text-gray-800">
+                <i class="fas fa-key mr-2 text-yellow-500"></i><span class="text-black">API</span>
+                <span id="apiCombinedStatus" class="ml-3 text-xl"></span>
+            </h2>
         </div>
-        <input type="text" id="apiToken" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" placeholder="Real-Debrid API 토큰을 입력하세요" />
-        <div class="flex gap-4">
+        <input type="text" id="apiToken" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Real-Debrid API 토큰을 입력하세요" />
+        <p class="text-xs text-gray-500 mt-2">
+          API 토큰은 <a href="https://real-debrid.com/apitoken" target="_blank" class="text-blue-600 underline">real-debrid.com/apitoken</a> 에서 발급받을 수 있습니다.<br/>
+          <span class="text-red-500">연결 실패 시:</span> 토큰이 정확한지, 인터넷 연결, 브라우저 확장 프로그램(광고 차단 등)을 확인해주세요.
+        </p>
+        <div class="flex gap-4 mt-4">
           <button onclick="saveToken()" class="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700"><i class="fas fa-save mr-2"></i>저장</button>
           <button onclick="testConnection()" class="flex-1 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700"><i class="fas fa-plug mr-2"></i>연결 테스트</button>
         </div>
       </div>
     </div>
+    
     <div id="toastContainer" class="toast"></div>
     <script src="cordova.js"></script>
     <script>
       const API_BASE = "https://api.real-debrid.com/rest/1.0";
-      
       let refreshTimer = null;
       let fastRefreshCount = 0;
       let slowRefreshCount = 0;
 
-      function scheduledRefresh() {
-        if (fastRefreshCount > 0) {
-          addLog(`[자동 갱신] 1분 간격으로 목록을 새로고침합니다. (남은 횟수: ${fastRefreshCount - 1}회)`);
-          refreshTorrents();
-          fastRefreshCount--;
-
-          if (fastRefreshCount === 0) {
-            addLog("빠른 갱신이 종료되었습니다. 5분 간격 갱신으로 전환합니다.");
-            clearInterval(refreshTimer);
-            if (slowRefreshCount > 0) {
-              refreshTimer = setInterval(scheduledRefresh, 300000); // 5분
-            }
-          }
-        } else if (slowRefreshCount > 0) {
-          addLog(`[자동 갱신] 5분 간격으로 목록을 새로고침합니다. (남은 횟수: ${slowRefreshCount - 1}회)`);
-          refreshTorrents();
-          slowRefreshCount--;
-
-          if (slowRefreshCount === 0) {
-            addLog("자동 갱신 주기가 모두 종료되었습니다. 수동으로 새로고침해주세요.");
-            clearInterval(refreshTimer);
-            refreshTimer = null;
-          }
-        } else {
-          if (refreshTimer) {
-            clearInterval(refreshTimer);
-            refreshTimer = null;
-          }
-        }
-      }
-
-      function startOrResetRefreshCycle() {
-        if (refreshTimer) {
-          clearInterval(refreshTimer);
-        }
-        addLog("자동 갱신 주기를 시작합니다. (5분간 1분 간격, 이후 55분간 5분 간격)");
-        fastRefreshCount = 5; // 1분 간격 5회
-        slowRefreshCount = 11; // 5분 간격 11회
-
-        scheduledRefresh();
-        refreshTimer = setInterval(scheduledRefresh, 60000); // 1분
-      }
-
-      async function fetchBestTrackers(button = null) {
-        const isAutoLoad = !button;
-        const trackerInput = document.getElementById("trackerInput");
-        const statusIcon = document.getElementById("trackerStatusIcon");
-        const updateTimeEl = document.getElementById("trackerUpdateTime");
-
-        const curatedTrackers = [
-          'udp://tracker.opentrackr.org:1337/announce', 'udp://open.stealth.si:80/announce', 'udp://exodus.desync.com:6969/announce', 'udp://tracker.torrent.eu.org:451/announce',
-          'udp://tracker.cyberia.is:6969/announce', 'udp://tracker.openbittorrent.com:80/announce', 'udp://tracker.zer0day.to:1337/announce', 'udp://p4p.arenabg.com:1337/announce',
-          'udp://tracker.leechers-paradise.org:6969/announce', 'udp://9.rarbg.to:2710/announce', 'http://open.tracker.cl:1337/announce', 'udp://open.demonii.com:1337/announce',
-          'udp://explodie.org:6969/announce', 'udp://public.tracker.vraphim.com:6969/announce', 'udp://tracker.dler.org:6969/announce'
-        ];
-        const externalTrackerUrls = [
-            'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt',
-            'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all_ip.txt'
-        ];
-        setLoading(button, true, '업데이트 중...');
-        statusIcon.innerHTML = '<i class="fas fa-spinner loading text-purple-500"></i>';
-        if (isAutoLoad) addLog(`최신 통합 트래커 목록을 불러옵니다...`);
-        try {
-            const responses = await Promise.all(externalTrackerUrls.map(url => fetch(url)));
-            for (const response of responses) {
-                if (!response.ok) throw new Error(`서버 응답 오류: ${response.status} for ${response.url}`);
-            }
-            const externalTexts = await Promise.all(responses.map(res => res.text()));
-            const combinedTrackers = curatedTrackers.concat(externalTexts.join('\n').split('\n'));
-            const uniqueTrackers = [...new Set(combinedTrackers.map(l => l.trim()).filter(Boolean))];
-            if (uniqueTrackers.length > 0) {
-                trackerInput.value = uniqueTrackers.join('\n');
-                statusIcon.innerHTML = '<i class="fas fa-check-circle text-green-500" title="최신 트래커 로딩 완료"></i>';
-                const message = `통합된 고유 트래커 ${uniqueTrackers.length}개를 불러왔습니다.`;
-                if (isAutoLoad) addLog(message, 'success');
-                else showToast(message, 'success');
-                
-                const now = new Date();
-                const formattedTime = now.toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'});
-                updateTimeEl.textContent = `(업데이트: ${formattedTime})`;
-
-            } else { throw new Error('불러온 트래커 목록이 비어있습니다.'); }
-        } catch (error) {
-            statusIcon.innerHTML = '<i class="fas fa-times-circle text-red-500" title="트래커 로딩 실패"></i>';
-            const errorMessage = `트래커 로딩 실패: ${error.message}`;
-            addLog(errorMessage, 'error');
-            if (!isAutoLoad) showToast(errorMessage, 'error');
-            updateTimeEl.textContent = '(업데이트 실패)';
-        } finally { setLoading(button, false); }
-      }
-
-      async function handleUnifiedUpload(button) {
-        const magnetInput = document.getElementById("magnetInput");
-        const fileInput = document.getElementById("torrentFile");
-        const trackerInput = document.getElementById("trackerInput");
-        
-        const magnetsRaw = magnetInput.value.trim().split('\n');
-        const magnets = magnetsRaw.map(link => {
-            const match = link.trim().match(/(magnet:\?xt=urn:btih:[a-zA-Z0-9]{40})/);
-            return match ? match[1] : null;
-        }).filter(Boolean);
-
-        const fileToUpload = fileInput.files[0];
-        const trackers = trackerInput.value.trim().split("\n").filter(Boolean);
-
-        if (magnets.length === 0 && !fileToUpload) {
-          showToast("추가할 유효한 마그넷 링크나 토렌트 파일이 없습니다.", "warning");
-          addLog("유효한 마그넷을 찾지 못했습니다. magnet:?xt=urn:btih: 형식인지 확인하세요.", "warning");
-          return;
-        }
-
-        setLoading(button, true);
-        let successCount = 0;
-        let errorCount = 0;
-        addLog(`총 ${magnets.length}개의 마그넷과 ${fileToUpload ? 1 : 0}개의 파일 처리를 시작합니다.`);
-
-        try {
-          if (magnets.length > 0) {
-            const trackerString = trackers.map((tr) => `&tr=${encodeURIComponent(tr.trim())}`).join("");
-            if (trackerString) addLog(`${trackers.length}개의 트래커를 각 마그넷에 추가합니다.`);
-            
-            for (const [index, magnet] of magnets.entries()) {
-              addLog(`[${index + 1}/${magnets.length}] 마그넷 추가 시도 중...`);
-              try {
-                const finalMagnet = magnet + trackerString;
-                const response = await makeApiCall("/torrents/addMagnet", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                  body: `magnet=${encodeURIComponent(finalMagnet)}`,
-                });
-                
-                if (response && response.id) {
-                  addLog(`[${index + 1}/${magnets.length}] ID ${response.id} 추가 성공. 파일 선택을 시작합니다.`);
-                  await makeApiCall(`/torrents/selectFiles/${response.id}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: "files=all",
-                  });
-                  addLog(`[${index + 1}/${magnets.length}] ID ${response.id} 파일 선택 완료. 다운로드가 시작됩니다.`, "success");
-                  successCount++;
-                } else {
-                  throw new Error("API 응답에서 토렌트 ID를 받지 못했습니다.");
-                }
-
-              } catch (e) {
-                errorCount++;
-                addLog(`[${index + 1}/${magnets.length}] 처리 중 오류 발생: ${e.message}`, "error");
-              }
-            }
-          }
-
-          if (fileToUpload) {
-            addLog(`토렌트 파일(${fileToUpload.name}) 추가 시도 중...`);
-            try {
-              const response = await makeApiCall("/torrents/addTorrent", { method: "PUT", body: fileToUpload });
-              if (response && response.id) {
-                addLog(`파일 추가 성공. ID ${response.id} 파일 선택을 시작합니다.`);
-                await makeApiCall(`/torrents/selectFiles/${response.id}`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                  body: "files=all",
-                });
-                addLog(`ID ${response.id} 파일 선택 완료. 다운로드가 시작됩니다.`, "success");
-                successCount++;
-              } else { throw new Error("API 응답에서 토렌트 ID를 받지 못했습니다."); }
-            } catch (e) {
-              errorCount++;
-              addLog(`토렌트 파일 처리 중 오류 발생: ${e.message}`, "error");
-            }
-          }
-
-          if (successCount > 0) showToast(`총 ${successCount}개 항목의 다운로드를 성공적으로 시작했습니다.`, "success");
-          if (errorCount > 0) showToast(`${errorCount}개 항목 추가에 실패했습니다. 로그를 확인하세요.`, "error");
-
-          magnetInput.value = "";
-          fileInput.value = "";
-          document.getElementById("fileInfo").innerHTML = "여기에 .torrent 파일을 드래그 앤 드롭 하거나, 클릭하여 선택하세요.";
-          
-          setTimeout(() => startOrResetRefreshCycle(), 1500);
-
-        } catch (error) {
-          showToast(`업로드 중 오류 발생: ${error.message}`, "error");
-        } finally {
-          setLoading(button, false);
-        }
-      }
-
-      async function refreshTorrents(){
-        try{
-            addLog("토렌트 목록을 불러오는 중...");
-            const torrents = await makeApiCall("/torrents");
-            
-            const totalBytes = torrents.reduce((sum, torrent) => sum + torrent.bytes, 0);
-            document.getElementById('apiListSize').innerHTML = `📚 내 목록 총용량: <span class="font-bold">${formatSize(totalBytes)}</span>`;
-            
-            displayTorrents(torrents);
-        } catch(e) {
-            showToast("토렌트 목록 로드 실패: "+e.message,"error");
-            document.getElementById("torrentList").innerHTML=`<p class="text-red-500 text-center py-8">${e.message}</p>`;
-        }
-      }
+      function scheduledRefresh() { if (fastRefreshCount > 0) { addLog(`[자동 갱신] 1분 간격으로 목록을 새로고침합니다. (남은 횟수: ${fastRefreshCount - 1}회)`); refreshTorrents(); fastRefreshCount--; if (fastRefreshCount === 0) { addLog("빠른 갱신이 종료되었습니다. 5분 간격 갱신으로 전환합니다."); clearInterval(refreshTimer); if (slowRefreshCount > 0) { refreshTimer = setInterval(scheduledRefresh, 300000); } } } else if (slowRefreshCount > 0) { addLog(`[자동 갱신] 5분 간격으로 목록을 새로고침합니다. (남은 횟수: ${slowRefreshCount - 1}회)`); refreshTorrents(); slowRefreshCount--; if (slowRefreshCount === 0) { addLog("자동 갱신 주기가 모두 종료되었습니다. 수동으로 새로고침해주세요."); clearInterval(refreshTimer); refreshTimer = null; } } else { if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; } } }
+      function startOrResetRefreshCycle() { if (refreshTimer) clearInterval(refreshTimer); addLog("자동 갱신 주기를 시작합니다. (5분간 1분 간격, 이후 55분간 5분 간격)"); fastRefreshCount = 5; slowRefreshCount = 11; scheduledRefresh(); refreshTimer = setInterval(scheduledRefresh, 60000); }
+      async function fetchBestTrackers(button = null) { const isAutoLoad = !button; const trackerInput = document.getElementById("trackerInput"); const statusIcon = document.getElementById("trackerStatusIcon"); const updateTimeEl = document.getElementById("trackerUpdateTime"); const curatedTrackers = ['udp://tracker.opentrackr.org:1337/announce', 'udp://open.stealth.si:80/announce', 'udp://exodus.desync.com:6969/announce', 'udp://tracker.torrent.eu.org:451/announce', 'udp://tracker.cyberia.is:6969/announce', 'udp://tracker.openbittorrent.com:80/announce', 'udp://tracker.zer0day.to:1337/announce', 'udp://p4p.arenabg.com:1337/announce', 'udp://tracker.leechers-paradise.org:6969/announce', 'udp://9.rarbg.to:2710/announce', 'http://open.tracker.cl:1337/announce', 'udp://open.demonii.com:1337/announce', 'udp://explodie.org:6969/announce', 'udp://public.tracker.vraphim.com:6969/announce', 'udp://tracker.dler.org:6969/announce']; const externalTrackerUrls = ['https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt', 'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all_ip.txt']; setLoading(button, true, '업데이트 중...'); statusIcon.innerHTML = '<i class="fas fa-spinner loading text-purple-500"></i>'; if (isAutoLoad) addLog(`최신 통합 트래커 목록을 불러옵니다...`); try { const responses = await Promise.all(externalTrackerUrls.map(url => fetch(url))); for (const response of responses) { if (!response.ok) throw new Error(`서버 응답 오류: ${response.status} for ${response.url}`); } const externalTexts = await Promise.all(responses.map(res => res.text())); const combinedTrackers = curatedTrackers.concat(externalTexts.join('\n').split('\n')); const uniqueTrackers = [...new Set(combinedTrackers.map(l => l.trim()).filter(Boolean))]; if (uniqueTrackers.length > 0) { trackerInput.value = uniqueTrackers.join('\n'); statusIcon.innerHTML = '<i class="fas fa-check-circle text-green-500" title="최신 트래커 로딩 완료"></i>'; const message = `통합된 고유 트래커 ${uniqueTrackers.length}개를 불러왔습니다.`; if (isAutoLoad) addLog(message, 'success'); else showToast(message, 'success'); const now = new Date(); const formattedTime = now.toLocaleString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }); updateTimeEl.textContent = `${uniqueTrackers.length}개, ${formattedTime}`; } else { throw new Error('불러온 트래커 목록이 비어있습니다.'); } } catch (error) { statusIcon.innerHTML = '<i class="fas fa-times-circle text-red-500" title="트래커 로딩 실패"></i>'; const errorMessage = `트래커 로딩 실패: ${error.message}`; addLog(errorMessage, 'error'); if (!isAutoLoad) showToast(errorMessage, 'error'); updateTimeEl.textContent = '업데이트 실패'; } finally { setLoading(button, false); } }
+      async function handleUnifiedUpload(button) { const magnetInput = document.getElementById("magnetInput"); const fileInput = document.getElementById("torrentFile"); const trackerInput = document.getElementById("trackerInput"); const magnetsRaw = magnetInput.value.trim().split('\n'); const magnets = magnetsRaw.map(link => { const match = link.trim().match(/(magnet:\?xt=urn:btih:[a-zA-Z0-9]{40})/); return match ? match[1] : null; }).filter(Boolean); const fileToUpload = fileInput.files[0]; const trackers = trackerInput.value.trim().split("\n").filter(Boolean); if (magnets.length === 0 && !fileToUpload) { showToast("추가할 유효한 마그넷 링크나 토렌트 파일이 없습니다.", "warning"); addLog("유효한 마그넷을 찾지 못했습니다. magnet:?xt=urn:btih: 형식인지 확인하세요.", "warning"); return; } setLoading(button, true); let successCount = 0; let errorCount = 0; addLog(`총 ${magnets.length}개의 마그넷과 ${fileToUpload ? 1 : 0}개의 파일 처리를 시작합니다.`); try { if (magnets.length > 0) { const trackerString = trackers.map((tr) => `&tr=${encodeURIComponent(tr.trim())}`).join(""); if (trackerString) addLog(`${trackers.length}개의 트래커를 각 마그넷에 추가합니다.`); for (const [index, magnet] of magnets.entries()) { addLog(`[${index + 1}/${magnets.length}] 마그넷 추가 시도 중...`); try { const finalMagnet = magnet + trackerString; const response = await makeApiCall("/torrents/addMagnet", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: `magnet=${encodeURIComponent(finalMagnet)}` }); if (response && response.id) { addLog(`[${index + 1}/${magnets.length}] ID ${response.id} 추가 성공. 파일 선택을 시작합니다.`); await makeApiCall(`/torrents/selectFiles/${response.id}`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "files=all" }); addLog(`[${index + 1}/${magnets.length}] ID ${response.id} 파일 선택 완료. 다운로드가 시작됩니다.`, "success"); successCount++; } else { throw new Error("API 응답에서 토렌트 ID를 받지 못했습니다."); } } catch (e) { errorCount++; addLog(`[${index + 1}/${magnets.length}] 처리 중 오류 발생: ${e.message}`, "error"); } } } if (fileToUpload) { addLog(`토렌트 파일(${fileToUpload.name}) 추가 시도 중...`); try { const response = await makeApiCall("/torrents/addTorrent", { method: "PUT", body: fileToUpload }); if (response && response.id) { addLog(`파일 추가 성공. ID ${response.id} 파일 선택을 시작합니다.`); await makeApiCall(`/torrents/selectFiles/${response.id}`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "files=all" }); addLog(`ID ${response.id} 파일 선택 완료. 다운로드가 시작됩니다.`, "success"); successCount++; } else { throw new Error("API 응답에서 토렌트 ID를 받지 못했습니다."); } } catch (e) { errorCount++; addLog(`토렌트 파일 처리 중 오류 발생: ${e.message}`, "error"); } } if (successCount > 0) showToast(`총 ${successCount}개 항목의 다운로드를 성공적으로 시작했습니다.`, "success"); if (errorCount > 0) showToast(`${errorCount}개 항목 추가에 실패했습니다. 로그를 확인하세요.`, "error"); magnetInput.value = ""; fileInput.value = ""; document.getElementById("fileInfo").innerHTML = "여기에 .torrent 파일을 드래그 앤 드롭 하거나, 클릭하여 선택하세요."; setTimeout(() => startOrResetRefreshCycle(), 1500); } catch (error) { showToast(`업로드 중 오류 발생: ${error.message}`, "error"); } finally { setLoading(button, false); } }
+      async function refreshTorrents(){ try{ addLog("토렌트 목록을 불러오는 중..."); const torrents = await makeApiCall("/torrents?limit=1000"); const totalBytes = torrents.reduce((sum, torrent) => sum + torrent.bytes, 0); document.getElementById('apiListSize').innerHTML = `📚 : <span class="font-bold">${formatSize(totalBytes)}</span>`; displayTorrents(torrents); } catch(e) { showToast("토렌트 목록 로드 실패: "+e.message,"error"); document.getElementById("torrentList").innerHTML=`<p class="text-red-500 text-center py-8">${e.message}</p>`; } }
+      function displayTorrents(torrents) { const listEl = document.getElementById("torrentList"); if (torrents && torrents.length > 0) { listEl.innerHTML = torrents.map(t => ` <div class="border rounded-lg p-3 hover:bg-gray-100 transition duration-200"> <div class="flex justify-between items-start mb-2"> <h3 class="font-semibold text-gray-800 flex-1 mr-4 overflow-hidden text-ellipsis whitespace-nowrap min-w-0" title="${t.filename}">${t.filename || "Unknown"}</h3> <span class="px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${getStatusClass(t.status)}">${getStatusText(t.status)}</span> </div> <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-gray-600 mb-3"> <div><i class="fas fa-hdd mr-1 text-gray-400"></i> ${formatSize(t.bytes)}</div> <div><i class="fas fa-arrow-down mr-1 text-green-500"></i> ${formatSize(t.speed || 0)}/s</div> <div><i class="fas fa-clock mr-1 text-gray-400"></i> ${new Date(t.added).toLocaleString()}</div> </div> ${t.progress >= 0 ? `<div class="w-full bg-gray-200 rounded-full h-2.5 mb-3"><div class="bg-blue-600 h-2.5 rounded-full" style="width: ${t.progress}%"></div></div>` : ""} <div class="flex justify-between items-center"> <div class="flex gap-2 flex-wrap"> <button onclick="deleteTorrent('${t.id}')" class="px-3 py-1 bg-red-600 text-white text-xs font-semibold rounded hover:bg-red-700"><i class="fas fa-trash mr-1"></i>삭제</button> ${t.status === "waiting_files_selection" ? `<button onclick="selectFiles('${t.id}')" class="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700"><i class="fas fa-check-square mr-1"></i>파일 선택</button>` : ""} </div> <div> ${t.status === "downloaded" ? `<button onclick="getTorrentInfo('${t.id}')" class="px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded hover:bg-green-700"><i class="fas fa-download mr-1"></i>다운로드 링크 보기</button>` : ""} </div> </div> </div>`).join(""); } else { listEl.innerHTML = '<p class="text-gray-500 text-center py-8">활성 토렌트가 없습니다.</p>'; } }
+      function getStatusClass(status) { return { waiting_files_selection: "bg-yellow-100 text-yellow-800", queued: "bg-gray-200 text-gray-800", downloading: "bg-blue-100 text-blue-800", downloaded: "bg-green-100 text-green-800", error: "bg-red-100 text-red-800", dead: "bg-red-200 text-red-900" }[status] || "bg-gray-100 text-gray-800"; }
+      function getStatusText(status) { return { waiting_files_selection: "파일 선택 대기", queued: "대기 중", downloading: "다운로드 중", downloaded: "완료", error: "오류", dead: "데드 토렌트" }[status] || status; }
+      function formatSize(bytes) { if (bytes === 0) return "0 B"; const k = 1024; const sizes = ["B", "KB", "MB", "GB", "TB"]; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]; }
+      async function deleteTorrent(id) { if (!confirm("이 토렌트를 목록에서 삭제하시겠습니까?")) return; try { await makeApiCall(`/torrents/delete/${id}`, { method: "DELETE" }); showToast("토렌트가 삭제되었습니다", "success"); await refreshTorrents(); } catch (e) { showToast("삭제 실패: " + e.message, "error"); } }
+      async function deleteCompleted() { if (!confirm("완료된 모든 토렌트를 목록에서 삭제하시겠습니까?")) return; addLog("완료된 토렌트 삭제를 시작합니다..."); try { const torrents = await makeApiCall("/torrents?limit=1000"); const completed = torrents.filter(t => t.status === 'downloaded'); if (completed.length === 0) { showToast("삭제할 완료된 토렌트가 없습니다.", "info"); addLog("삭제할 완료된 항목이 없습니다."); return; } let deletedCount = 0; for (const torrent of completed) { await makeApiCall(`/torrents/delete/${torrent.id}`, { method: "DELETE" }); deletedCount++; } showToast(`${deletedCount}개의 완료된 토렌트가 삭제되었습니다.`, "success"); addLog(`${deletedCount}개의 완료된 토렌트를 성공적으로 삭제했습니다.`, "success"); await refreshTorrents(); } catch (error) { showToast("완료된 토렌트 삭제 중 오류 발생.", "error"); addLog(`완료된 항목 삭제 실패: ${error.message}`, "error"); } }
+      async function selectFiles(id) { try { addLog(`ID ${id}: 모든 파일을 선택합니다.`); await makeApiCall(`/torrents/selectFiles/${id}`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "files=all" }); showToast("모든 파일이 선택되어 다운로드가 시작됩니다.", "success"); await refreshTorrents(); } catch (e) { showToast("파일 선택 실패: " + e.message, "error"); } }
       
-      function displayTorrents(t){const e=document.getElementById("torrentList");if(t&&t.length>0){e.innerHTML=t.map(t=>`
-      <div class="border rounded-lg p-3 hover:bg-gray-100 transition duration-200">
-        <div class="flex justify-between items-start mb-2">
-          <h3 class="font-semibold text-gray-800 flex-1 mr-4 overflow-hidden text-ellipsis whitespace-nowrap min-w-0" title="${t.filename}">${t.filename||"Unknown"}</h3>
-          <span class="px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${getStatusClass(t.status)}">${getStatusText(t.status)}</span>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-gray-600 mb-3">
-          <div><i class="fas fa-hdd mr-1 text-gray-400"></i> ${formatSize(t.bytes)}</div>
-          <div><i class="fas fa-arrow-down mr-1 text-green-500"></i> ${formatSize(t.speed||0)}/s</div>
-          <div><i class="fas fa-clock mr-1 text-gray-400"></i> ${new Date(t.added).toLocaleString()}</div>
-        </div>
-        ${t.progress>=0?`<div class="w-full bg-gray-200 rounded-full h-2.5 mb-3">
-          <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${t.progress}%"></div>
-        </div>`:""}
-        <div class="flex justify-between items-center">
-            <div class="flex gap-2 flex-wrap">
-                <button onclick="deleteTorrent('${t.id}')" class="px-3 py-1 bg-red-600 text-white text-xs font-semibold rounded hover:bg-red-700"><i class="fas fa-trash mr-1"></i>삭제</button>
-                ${t.status === "waiting_files_selection" ? `<button onclick="selectFiles('${t.id}')" class="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700"><i class="fas fa-check-square mr-1"></i>파일 선택</button>` : ""}
-            </div>
-            <div>
-                ${t.status === "downloaded" ? `<button onclick="getTorrentInfo('${t.id}')" class="px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded hover:bg-green-700"><i class="fas fa-download mr-1"></i>다운로드 링크 보기</button>` : ""}
-            </div>
-        </div>
-      </div>`).join("")}else{e.innerHTML='<p class="text-gray-500 text-center py-8">활성 토렌트가 없습니다.</p>'}}
-      
-      function getStatusClass(t){return{waiting_files_selection:"bg-yellow-100 text-yellow-800",queued:"bg-gray-200 text-gray-800",downloading:"bg-blue-100 text-blue-800",downloaded:"bg-green-100 text-green-800",error:"bg-red-100 text-red-800",dead:"bg-red-200 text-red-900"}[t]||"bg-gray-100 text-gray-800"}
-      function getStatusText(t){return{waiting_files_selection:"파일 선택 대기",queued:"대기 중",downloading:"다운로드 중",downloaded:"완료",error:"오류",dead:"데드 토렌트"}[t]||t}
-      function formatSize(t){if(t===0)return"0 B";const e=1024,n=["B","KB","MB","GB","TB"],o=Math.floor(Math.log(t)/Math.log(e));return parseFloat((t/Math.pow(e,o)).toFixed(2))+" "+n[o]}
-      async function deleteTorrent(t){if(!confirm("이 토렌트를 목록에서 삭제하시겠습니까?"))return;try{await makeApiCall(`/torrents/delete/${t}`,{method:"DELETE"}),showToast("토렌트가 삭제되었습니다","success"),await refreshTorrents()}catch{showToast("삭제 실패","error")}}
-      async function deleteCompleted() { if (!confirm("완료된 모든 토렌트를 목록에서 삭제하시겠습니까?")) return; addLog("완료된 토렌트 삭제를 시작합니다..."); try { const torrents = await makeApiCall("/torrents"); const completed = torrents.filter(t => t.status === 'downloaded'); if (completed.length === 0) { showToast("삭제할 완료된 토렌트가 없습니다.", "info"); addLog("삭제할 완료된 항목이 없습니다."); return; } let deletedCount = 0; for (const torrent of completed) { await makeApiCall(`/torrents/delete/${torrent.id}`, { method: "DELETE" }); deletedCount++; } showToast(`${deletedCount}개의 완료된 토렌트가 삭제되었습니다.`, "success"); addLog(`${deletedCount}개의 완료된 토렌트를 성공적으로 삭제했습니다.`, "success"); await refreshTorrents(); } catch (error) { showToast("완료된 토렌트 삭제 중 오류 발생.", "error"); addLog(`완료된 항목 삭제 실패: ${error.message}`, "error"); } }
-      async function selectFiles(t){try{addLog(`ID ${t}: 모든 파일을 선택합니다.`),await makeApiCall(`/torrents/selectFiles/${t}`,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"files=all"}),showToast("모든 파일이 선택되어 다운로드가 시작됩니다.","success"),await refreshTorrents()}catch{showToast("파일 선택 실패","error")}}
-      
-      async function getTorrentInfo(torrentId){
+      /**
+       * [수정됨] 100KB 미만 파일 필터링 기능 및 진단 로그 추가
+       */
+      async function getTorrentInfo(torrentId) {
         try {
             addLog(`ID ${torrentId}: 다운로드 링크를 조회합니다.`);
             const info = await makeApiCall(`/torrents/info/${torrentId}`);
+
+            addLog(`진단: ${info.links.length}개의 링크와 ${info.files.length}개의 파일을 찾았습니다.`);
+
+            const MIN_FILE_SIZE = 100 * 1024; // 100 KB in bytes
             
-            const fileListHTML = info.links.map((link, index) => {
-                const file = info.files[index];
+            // 파일과 링크 정보를 합치고, 100KB 이상인 파일만 필터링합니다.
+            const filteredFiles = info.files
+                .map((file, index) => ({ ...file, link: info.links[index] }))
+                .filter(file => file.bytes >= MIN_FILE_SIZE);
+
+            const originalCount = info.files.length;
+            const filteredCount = filteredFiles.length;
+            if (originalCount > filteredCount) {
+                addLog(`진단: ${originalCount - filteredCount}개 파일(100KB 미만)을 목록에서 숨겼습니다.`);
+            }
+            
+            const fileListHTML = filteredFiles.map(file => {
                 return `<li class="p-2 my-1 border rounded flex justify-between items-center text-sm hover:bg-gray-50">
                           <span class="flex-1 mr-4 break-all"><i class="fas fa-file-alt mr-2 text-gray-500"></i>${file.path} (${formatSize(file.bytes)})</span>
-                          <a href="${link}" target="_blank" class="px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded hover:bg-green-600 whitespace-nowrap"><i class="fas fa-download mr-1"></i>다운로드</a>
+                          <a href="${file.link}" target="_blank" class="px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded hover:bg-green-600 whitespace-nowrap"><i class="fas fa-download mr-1"></i>다운로드</a>
                         </li>`;
             }).join('');
 
-            const modalHTML = `
-            <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 fade-in" onclick="this.remove()">
-              <div class="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col" onclick="event.stopPropagation()">
-                <div class="flex justify-between items-center mb-4 border-b pb-3">
-                  <h3 class="text-lg font-semibold text-gray-800">다운로드 링크</h3>
-                  <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
-                </div>
-                <div class="overflow-y-auto">
-                  <p class="mb-2"><strong>파일명:</strong> ${info.filename}</p>
-                  <p class="mb-4"><strong>총 크기:</strong> ${formatSize(info.bytes)}</p>
-                  ${fileListHTML ? `<ul class="mt-2 space-y-2">${fileListHTML}</ul>` : "<p class='text-yellow-600'>다운로드 링크가 아직 생성되지 않았습니다. 잠시 후 다시 시도해주세요.</p>"}
-                </div>
-                <button onclick="this.closest('.fixed').remove()" class="mt-4 px-4 py-2 bg-gray-600 text-white rounded self-end hover:bg-gray-700">닫기</button>
-              </div>
-            </div>`;
+            const modalHTML = `<div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 fade-in" onclick="this.remove()"><div class="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col" onclick="event.stopPropagation()"><div class="flex justify-between items-center mb-4 border-b pb-3"><h3 class="text-lg font-semibold text-gray-800">다운로드 링크</h3><button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button></div><div class="overflow-y-auto"><p class="mb-2"><strong>파일명:</strong> ${info.filename}</p><p class="mb-4"><strong>총 크기:</strong> ${formatSize(info.bytes)}</p>${fileListHTML ? `<ul class="mt-2 space-y-2">${fileListHTML}</ul>` : "<p class='text-yellow-600'>다운로드 링크가 아직 생성되지 않았거나, 모든 파일이 100KB 미만입니다.</p>"}</div><button onclick="this.closest('.fixed').remove()" class="mt-4 px-4 py-2 bg-gray-600 text-white rounded self-end hover:bg-gray-700">닫기</button></div></div>`;
             document.body.insertAdjacentHTML('beforeend', modalHTML);
-        } catch(error) {
-            showToast("토렌트 정보 로드에 실패했습니다.", "error")
+        } catch(error) { 
+            showToast("토렌트 정보 로드에 실패했습니다.", "error");
+            addLog(`토렌트 정보 로드 실패: ${error.message}`, 'error');
         }
       }
-
+      
       async function makeApiCall(t,e={}){const n=getToken();if(!n)throw new Error("API 토큰이 설정되지 않았습니다.");const o=`${API_BASE}${t}`,s={...e,headers:{Authorization:`Bearer ${n}`,...(e.headers||{})}};try{const i=await fetch(o,s);if(i.status===204)return null;const a=await i.json();if(!i.ok){const r=a&&a.error?`${a.error_code} - ${a.error}`:i.statusText;throw new Error(`API 오류: ${i.status} - ${r}`)}return a}catch(c){throw addLog(`API 호출 실패: ${c.message}`,"error"),c}}
       function getToken(){return localStorage.getItem("rdToken")}
-      
-      function saveToken(){
-        const token = document.getElementById("apiToken").value.trim();
-        if(token) {
-            localStorage.setItem("rdToken", token);
-            showToast("API 토큰이 저장되었습니다", "success");
-            testConnection();
-        } else {
-            showToast("토큰을 입력해주세요", "warning");
-        }
-      }
+      function saveToken(){ const token = document.getElementById("apiToken").value.trim(); if(token) { localStorage.setItem("rdToken", token); showToast("API 토큰이 저장되었습니다", "success"); testConnection(); } else { showToast("토큰을 입력해주세요", "warning"); } }
 
-      // [수정됨] 트래픽 API 호출 제거
-      async function testConnection(){
-        const apiStatusEl = document.getElementById('apiStatus');
-        const apiStartDateEl = document.getElementById('apiStartDate');
-        const apiPointsEl = document.getElementById('apiPoints');
-
+      async function testConnection() {
+        const apiCombinedStatusEl = document.getElementById('apiCombinedStatus');
+        apiCombinedStatusEl.innerHTML = `<span class="font-bold text-yellow-600">확인 중...</span>`;
         try {
             addLog("API 연결을 테스트합니다...");
             const user = await makeApiCall("/user");
-
             showToast(`연결 성공! 사용자: ${user.username}`, "success");
             addLog(`API 연결 성공 - 사용자: ${user.username}`, "success");
-            
             if (user.type === 'premium' && user.expiration) {
                 const expirationDate = new Date(user.expiration);
                 const now = new Date();
-
-                const startDate = new Date(expirationDate);
-                startDate.setDate(startDate.getDate() - 180);
-                apiStartDateEl.textContent = `프리미엄 시작일: ${startDate.toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}`;
-
-                const diffTime = expirationDate - now;
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
-                const formattedExpiration = expirationDate.toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
-
-                let dDayText = '';
-                let colorClass = '';
-
-                if (diffDays > 7) {
-                    dDayText = `(D-${diffDays})`;
-                    colorClass = 'text-green-600';
-                } else if (diffDays > 0) {
-                    dDayText = `(D-${diffDays})`;
-                    colorClass = 'text-yellow-600';
-                    showToast(`프리미엄 만료일이 ${diffDays}일 남았습니다.`, 'warning');
-                } else {
-                    dDayText = '(만료)';
-                    colorClass = 'text-red-600';
-                }
-                
-                apiStatusEl.innerHTML = `만료일: ${formattedExpiration} <span class="font-bold">${dDayText}</span>`;
-                apiStatusEl.className = `block text-base font-bold ${colorClass}`;
-
-                apiPointsEl.innerHTML = `⚡️ 포인트: <span class="font-bold">${user.points}</span>`;
-                apiPointsEl.className = 'block text-base font-bold text-blue-600 mt-1';
-
-            } else {
-                apiStartDateEl.textContent = '';
-                apiPointsEl.textContent = '';
-                apiStatusEl.textContent = '프리미엄 계정이 아닙니다.';
-                apiStatusEl.className = 'block text-base font-bold text-red-600';
-            }
-        } catch(e) {
+                const diffDays = Math.ceil((expirationDate - now) / (1000 * 60 * 60 * 24));
+                let dDayText = `D-${diffDays}`;
+                let colorClass = 'text-green-600';
+                if (diffDays <= 0) { dDayText = '만료'; colorClass = 'text-red-600'; } 
+                else if (diffDays <= 7) { colorClass = 'text-yellow-600'; showToast(`프리미엄 만료일이 ${diffDays}일 남았습니다.`, 'warning'); }
+                apiCombinedStatusEl.innerHTML = `<span class="font-bold ${colorClass}" title="만료일: ${expirationDate.toLocaleString()}">${dDayText}</span>, <span class="font-bold text-blue-600">${user.points}P</span>`;
+            } else { apiCombinedStatusEl.innerHTML = `<span class="font-bold text-red-600">프리미엄 아님</span>`; }
+        } catch (e) {
             showToast(`연결 실패: ${e.message}`, "error");
-            apiStatusEl.textContent = '연결 실패';
-            apiStatusEl.className = 'block text-base font-bold text-red-600';
-            apiStartDateEl.textContent = '';
-            apiPointsEl.textContent = '';
+            apiCombinedStatusEl.innerHTML = `<span class="font-bold text-red-600" title="${e.message}">연결 실패</span>`;
         }
       }
       
-      function addLog(t,e="info"){const n=document.getElementById("statusLog"),o=(new Date).toLocaleTimeString(),s="error"===e?"fa-times-circle text-red-500":"success"===e?"fa-check-circle text-green-500":"warning"===e?"fa-exclamation-triangle text-yellow-500":"fa-info-circle text-blue-500",i=document.getElementById("initialLogMessage");i&&i.remove();const a=document.createElement("div");a.className="mb-2 p-2 border-l-4 "+("error"===e?"border-red-400 bg-red-50":"success"===e?"border-green-400 bg-green-50":"warning"===e?"border-yellow-400 bg-yellow-50":"border-blue-400 bg-blue-50"),a.innerHTML=`<span class="text-xs text-gray-500">[${o}]</span> <i class="fas ${s} ml-2 mr-2"></i> <span>${t}</span>`,n.appendChild(a),n.scrollTop=n.scrollHeight}
-      function showToast(t,e="info"){const n=document.getElementById("toastContainer"),o=document.createElement("div");o.className="fade-in px-6 py-4 rounded-lg text-white mb-4 shadow-lg "+("success"===e?"bg-green-500":"error"===e?"bg-red-500":"warning"===e?"bg-yellow-500":"bg-blue-500"),o.innerHTML=`<div class="flex items-center"><i class="fas ${"success"===e?"fa-check-circle":"error"===e?"fa-exclamation-circle":"warning"===e?"fa-exclamation-triangle":"fa-info-circle"} mr-3"></i><span class="font-semibold">${t}</span></div>`,n.appendChild(o),setTimeout(()=>{o.style.opacity="0",setTimeout(()=>o.remove(),300)},5e3)}
-      function setLoading(t,e,n="처리 중..."){if(!t)return;const o=t.querySelector("span"),s=t.querySelector("i.loading");t.dataset.originalText||(t.dataset.originalText=o.textContent),e?(t.disabled=!0,t.classList.add("opacity-75","cursor-not-allowed"),o.textContent=n,s.classList.remove("hidden")):(t.disabled=!1,t.classList.remove("opacity-75","cursor-not-allowed"),o.textContent=t.dataset.originalText,s.classList.add("hidden"))}
-      function displayFileName(){const t=document.getElementById("torrentFile"),e=document.getElementById("fileInfo");t.files.length>0?e.innerHTML=`<i class="fas fa-check-circle text-green-500 mr-2"></i> <strong>${t.files[0].name}</strong> (${formatSize(t.files[0].size)})`:e.innerHTML="여기에 .torrent 파일을 드래그 앤 드롭 하거나, 클릭하여 선택하세요."}
+      function addLog(message, type = "info") { const logEl = document.getElementById("statusLog"); const time = new Date().toLocaleTimeString(); const iconClass = type === "error" ? "fa-times-circle text-red-500" : type === "success" ? "fa-check-circle text-green-500" : type === "warning" ? "fa-exclamation-triangle text-yellow-500" : "fa-info-circle text-blue-500"; const initialMsg = document.getElementById("initialLogMessage"); if (initialMsg) initialMsg.remove(); const entry = document.createElement("div"); entry.className = `mb-2 p-2 border-l-4 ${type === "error" ? "border-red-400 bg-red-50" : type === "success" ? "border-green-400 bg-green-50" : type === "warning" ? "border-yellow-400 bg-yellow-50" : "border-blue-400 bg-blue-50"}`; entry.innerHTML = `<span class="text-xs text-gray-500">[${time}]</span> <i class="fas ${iconClass} ml-2 mr-2"></i> <span>${message}</span>`; logEl.appendChild(entry); logEl.scrollTop = logEl.scrollHeight; }
+      function showToast(message, type = "info") { const container = document.getElementById("toastContainer"); const toast = document.createElement("div"); const iconClass = type === "success" ? "fa-check-circle" : type === "error" ? "fa-exclamation-circle" : type === "warning" ? "fa-exclamation-triangle" : "fa-info-circle"; const bgColor = type === "success" ? "bg-green-500" : type === "error" ? "bg-red-500" : type === "warning" ? "bg-yellow-500" : "bg-blue-500"; toast.className = `fade-in px-6 py-4 rounded-lg text-white mb-4 shadow-lg ${bgColor}`; toast.innerHTML = `<div class="flex items-center"><i class="fas ${iconClass} mr-3"></i><span class="font-semibold">${message}</span></div>`; container.appendChild(toast); setTimeout(() => { toast.style.opacity = "0"; setTimeout(() => toast.remove(), 300); }, 5000); }
+      function setLoading(button, isLoading, loadingText = "처리 중...") { if (!button) return; const span = button.querySelector("span"); const spinner = button.querySelector("i.loading"); if (!button.dataset.originalText) button.dataset.originalText = span.textContent; if (isLoading) { button.disabled = true; button.classList.add("opacity-75", "cursor-not-allowed"); span.textContent = loadingText; spinner.classList.remove("hidden"); } else { button.disabled = false; button.classList.remove("opacity-75", "cursor-not-allowed"); span.textContent = button.dataset.originalText; spinner.classList.add("hidden"); } }
+      function displayFileName() { const fileInput = document.getElementById("torrentFile"); const fileInfo = document.getElementById("fileInfo"); if (fileInput.files.length > 0) { fileInfo.innerHTML = `<i class="fas fa-check-circle text-green-500 mr-2"></i> <strong>${fileInput.files[0].name}</strong> (${formatSize(fileInput.files[0].size)})`; } else { fileInfo.innerHTML = "여기에 .torrent 파일을 드래그 앤 드롭 하거나, 클릭하여 선택하세요."; } }
       
       function initializeApp(){
-        const savedToken=localStorage.getItem("rdToken") || "";
-        document.getElementById("apiToken").value=savedToken;
+        const savedToken = localStorage.getItem("rdToken") || "";
+        document.getElementById("apiToken").value = savedToken;
         addLog("페이지가 로드되었습니다.");
         if (savedToken) { 
             testConnection();
         } else { 
             addLog("API 토큰이 설정되지 않았습니다. 토큰을 입력하고 저장해주세요.", "warning");
-            const apiStatusEl = document.getElementById('apiStatus');
-            const apiStartDateEl = document.getElementById('apiStartDate');
-            const apiPointsEl = document.getElementById('apiPoints');
-            const apiListSizeEl = document.getElementById('apiListSize');
-            apiStatusEl.textContent = '토큰 정보가 없습니다.';
-            apiStatusEl.className = 'block text-base font-bold text-gray-500';
-            apiStartDateEl.textContent = '';
-            apiPointsEl.textContent = '';
-            apiListSizeEl.textContent = '';
+            const apiCombinedStatusEl = document.getElementById('apiCombinedStatus');
+            apiCombinedStatusEl.innerHTML = `<span class="font-bold text-gray-500">토큰 없음</span>`;
+            document.getElementById('apiListSize').textContent = '';
         }
         fetchBestTrackers();
         startOrResetRefreshCycle();
-        const t=document.getElementById("dropZone");
-        t.addEventListener("click",()=>document.getElementById("torrentFile").click()),["dragover","dragleave","drop"].forEach(e=>{t.addEventListener(e,t=>{t.preventDefault(),t.stopPropagation()})}),["dragenter","dragover"].forEach(e=>{t.classList.add("border-blue-400","bg-blue-50")}),["dragleave","drop"].forEach(e=>{t.classList.remove("border-blue-400","bg-blue-50")}),t.addEventListener("drop",e=>{const t=e.dataTransfer.files;t.length>0&&t[0].name.endsWith(".torrent")?(document.getElementById("torrentFile").files=t,displayFileName()):showToast("유효한 .torrent 파일이 아닙니다","error")})
+        const dropZone = document.getElementById("dropZone");
+        dropZone.addEventListener("click", () => document.getElementById("torrentFile").click());
+        ["dragover", "dragleave", "drop"].forEach(eventName => { dropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }); });
+        ["dragenter", "dragover"].forEach(eventName => { dropZone.addEventListener(eventName, () => { dropZone.classList.add("border-blue-400", "bg-blue-50"); }); });
+        ["dragleave", "drop"].forEach(eventName => { dropZone.addEventListener(eventName, () => { dropZone.classList.remove("border-blue-400", "bg-blue-50"); }); });
+        dropZone.addEventListener("drop", event => { const files = event.dataTransfer.files; if (files.length > 0 && files[0].name.endsWith(".torrent")) { document.getElementById("torrentFile").files = files; displayFileName(); } else { showToast("유효한 .torrent 파일이 아닙니다", "error"); } });
       }
-      document.addEventListener("DOMContentLoaded",initializeApp);
+
+      document.addEventListener("DOMContentLoaded", initializeApp);
     </script>
-
-    <!--
-    업데이트 내역 (최종 버전 기준):
-
-    [핵심 기능]
-    - '하이브리드 업로드' 구현: 마그넷과 토렌트 파일을 하나의 '추가하기' 버튼으로 동시에 처리.
-    - '자동 트래커 통합' 기능 추가: 페이지 로딩 시 공개된 외부 트래커 목록들을 자동으로 불러와 통합 리스트 생성.
-    - '자동 트래커 적용' 로직 개선: 생성된 통합 트래커 리스트를 모든 마그넷 링크에 자동으로 추가하여 다운로드 성공률 향상.
-    - '자동 파일 선택' 기능 추가: 마그넷/토렌트 추가 후, '파일 선택 대기' 상태에서 멈추지 않고 자동으로 모든 파일을 선택하여 즉시 다운로드를 시작하도록 수정.
-    - '완료 파일 다운로드' 기능 추가: 완료된 토렌트 항목에 '다운로드 링크 보기' 버튼을 추가하여, 팝업창에서 각 파일을 직접 다운로드할 수 있는 기능.
-
-    [API 및 안정성]
-    - 'API 토큰 관리 시스템' 도입: 하드코딩된 토큰 대신, 사용자가 직접 토큰을 입력하고 저장/테스트할 수 있는 기능으로 변경.
-    - '계정 정보 상세 표시' 기능: API로 계정 정보를 조회하여 아래 항목들을 표시:
-      - '프리미엄 시작일' (만료일로부터 180일 역산하여 계산)
-      - '만료일' (남은 날짜 D-Day 포함)
-      - '피델리티 포인트'
-      - '내 목록 총용량' (현재 토렌트 리스트의 합계)
-    - '동적 새로고침' 로직 적용 (API 호출 최적화):
-      - 페이지 시작 또는 새 토렌트 추가 시, 처음 5분간은 '1분' 간격으로 빠르게 새로고침.
-      - 이후 55분 동안은 '5분' 간격으로 전환하여 서버 부하 감소.
-      - 총 1시간 후 자동 새로고침 중지.
-    - '안정성 강화': 불필요한 텍스트가 포함된 마그넷 링크도 정규식을 통해 핵심 정보만 추출하도록 파싱 로직 개선.
-
-    [UI/UX 개선]
-    - '만료일 임박 알림' 기능: 프리미엄 만료일이 7일 이내로 남았을 경우, 경고 팝업(토스트)으로 사용자에게 알림.
-    - '트래커 업데이트 시간' 표시: 마지막으로 트래커를 성공적으로 불러온 시간을 표시하여 사용자에게 명확한 정보 제공.
-    - '상세한 로그' 기능: 업로드 각 단계 및 자동 새로고침 상태를 로그에 기록하여 진행 상황 파악 용이.
-    - 'UI 일관성 및 편의성' 개선:
-      - 상태 정보(총용량)는 페이지 상단 헤더에 크고 굵게 표시하여 즉각적인 확인 가능.
-      - 계정 정보(시작일, 만료일, 포인트)는 API 설정 영역에 그룹화하여 가독성 향상.
-      - 토렌트 목록 내 액션 버튼들을 좌/우로 분리하여 정렬 (삭제/관리: 왼쪽, 다운로드: 오른쪽).
-
-    [버그 수정]
-    - 'NaN 트래픽' 오류 해결: 관련 기능 전체를 제거하여 문제의 원인을 근본적으로 해결.
-    -->
 </body>
-</html>
+</html>```
