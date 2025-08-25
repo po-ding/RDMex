@@ -16,93 +16,93 @@
       .toast { position: fixed; top: 20px; right: 20px; z-index: 1000; }
     </style>
 </head>
-<!-- [수정됨] 전체 배경 및 텍스트 색상 톤업 -->
-<body class="bg-gray-800 text-gray-300 min-h-screen">
+<!-- [수정됨] 배경을 밝은 회색으로 변경 -->
+<body class="bg-gray-100 min-h-screen">
     <!-- Header -->
-    <div class="bg-gradient-to-r from-indigo-700 to-blue-900 text-white p-4 shadow-lg flex justify-between items-center">
+    <div class="bg-gradient-to-r from-blue-600 to-purple-800 text-white p-4 shadow-md flex justify-between items-center">
       <div>
         <h1 class="text-2xl font-bold flex items-center"><i class="fas fa-rocket mr-3"></i>RDMex</h1>
       </div>
-      <div class="text-right">
+      <div class="text-right opacity-90">
         <span id="apiListSize" class="text-xl font-bold"></span>
       </div>
     </div>
 
     <div class="container mx-auto px-4 md:px-6 py-8 max-w-7xl">
-      <!-- Input Section -->
-      <div class="bg-gray-700 rounded-lg shadow-lg p-6 mb-8 border border-gray-600">
+      <!-- [수정됨] 카드를 약간 더 어두운 회색으로 변경 -->
+      <div class="bg-gray-200 rounded-lg shadow-lg p-6 mb-8">
         <div class="flex flex-col md:flex-row gap-6">
             <div class="flex-1 flex relative h-32 md:h-auto">
                 <div id="magnetPlaceholder" class="absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300">
-                    <i class="fas fa-magnet text-4xl text-gray-500"></i>
+                    <i class="fas fa-magnet text-4xl text-gray-400"></i>
                 </div>
-                <textarea id="magnetInput" rows="2" class="w-full h-full p-3 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-left bg-transparent z-10 md:min-h-[128px]"></textarea>
+                <textarea id="magnetInput" rows="2" class="w-full h-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-left bg-transparent z-10 md:min-h-[128px]"></textarea>
             </div>
             <div class="flex-1 flex h-32 md:h-auto">
-                <div class="border-2 border-dashed border-gray-500 rounded-lg p-4 text-center w-full h-full flex flex-col justify-center items-center relative" id="dropZone">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center w-full h-full flex flex-col justify-center items-center relative" id="dropZone">
                     <input type="file" id="torrentFile" accept=".torrent" class="hidden" onchange="displayFileName()" />
                     <div id="dropZoneContent" class="flex flex-col items-center justify-center h-full">
-                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-500"></i>
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i>
                     </div>
                 </div>
             </div>
         </div>
         
-        <button onclick="handleUnifiedUpload(this)" id="unifiedUploadButton" class="w-full mt-6 px-4 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition duration-200 flex items-center justify-center text-2xl">
+        <button onclick="handleUnifiedUpload(this)" id="unifiedUploadButton" class="w-full mt-6 px-4 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-200 flex items-center justify-center text-2xl">
             <i class="fas fa-upload"></i>
         </button>
         
         <div class="mt-6">
           <div class="flex justify-between items-center mb-1">
-            <label for="trackerInput" class="block text-sm font-medium text-gray-300 flex items-center">
+            <label for="trackerInput" class="block text-sm font-medium text-gray-700 flex items-center">
                 <span class="cursor-pointer" onclick="fetchBestTrackers()">
-                    <i class="fas fa-satellite-dish mr-2 text-purple-400"></i>
+                    <i class="fas fa-satellite-dish mr-2 text-purple-500"></i>
                 </span>
                 <span id="trackerStatusIcon" class="ml-2"></span>
-                <span id="trackerUpdateTime" class="text-lg font-bold text-gray-200 ml-3"></span>
+                <span id="trackerUpdateTime" class="text-lg font-bold text-gray-700 ml-3"></span>
             </label>
           </div>
           <div class="relative">
-            <textarea id="trackerInput" rows="3" class="w-full p-3 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-800 text-gray-200" placeholder="최신 통합 트래커 목록을 자동으로 불러오는 중입니다..."></textarea>
+            <textarea id="trackerInput" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="최신 통합 트래커 목록을 자동으로 불러오는 중입니다..."></textarea>
           </div>
         </div>
       </div>
 
-      <!-- Torrent List Section -->
-      <div class="bg-gray-700 rounded-lg shadow-lg mb-8 relative border border-gray-600" style="height: 600px">
-        <div class="absolute top-0 left-0 right-0 p-6 h-20 border-b border-gray-600"><h2 class="text-xl font-semibold flex items-center justify-center text-gray-100 h-full"><i class="fas fa-list mr-2 text-indigo-400"></i>토렌트 목록</h2></div>
-        <div class="absolute top-20 bottom-20 left-0 right-0 overflow-y-auto p-4"><div id="torrentList" class="space-y-3"><p class="text-gray-400 text-center py-8">토렌트 목록을 불러오려면 새로고침 버튼을 클릭하세요.</p></div></div>
-        <div class="absolute bottom-0 left-0 right-0 p-6 h-20 border-t border-gray-600">
+      <!-- [수정됨] 카드를 약간 더 어두운 회색으로 변경 -->
+      <div class="bg-gray-200 rounded-lg shadow-lg mb-8 relative" style="height: 600px">
+        <div class="absolute top-0 left-0 right-0 p-6 h-20 border-b border-gray-300"><h2 class="text-xl font-semibold flex items-center justify-center text-gray-800 h-full"><i class="fas fa-list mr-2 text-blue-500"></i>토렌트 목록</h2></div>
+        <div class="absolute top-20 bottom-20 left-0 right-0 overflow-y-auto p-4"><div id="torrentList" class="space-y-3"><p class="text-gray-500 text-center py-8">토렌트 목록을 불러오려면 새로고침 버튼을 클릭하세요.</p></div></div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 h-20 border-t border-gray-300">
             <div class="flex justify-center items-center h-full gap-4">
-                <button onclick="refreshTorrents()" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700"><i class="fas fa-sync-alt mr-2"></i>새로고침</button>
-                <button onclick="deleteCompleted()" class="px-4 py-2 bg-red-800 text-white font-semibold rounded-lg hover:bg-red-700"><i class="fas fa-trash mr-2"></i>완료삭제</button>
+                <button onclick="refreshTorrents()" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700"><i class="fas fa-sync-alt mr-2"></i>새로고침</button>
+                <button onclick="deleteCompleted()" class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700"><i class="fas fa-trash mr-2"></i>완료삭제</button>
             </div>
         </div>
       </div>
       
-      <!-- Log Section -->
-      <div class="bg-gray-700 rounded-lg shadow-lg p-6 border border-gray-600">
-        <h2 class="text-xl font-semibold mb-4 flex items-center text-gray-100"><i class="fas fa-info-circle mr-2 text-indigo-400"></i>상태 및 로그</h2>
-        <div id="statusLog" class="bg-gray-800 rounded-lg p-4 max-h-60 overflow-y-auto"><p id="initialLogMessage" class="text-gray-400">준비 완료.</p></div>
+      <!-- [수정됨] 카드를 약간 더 어두운 회색으로 변경 -->
+      <div class="bg-gray-200 rounded-lg shadow-lg p-6">
+        <h2 class="text-xl font-semibold mb-4 flex items-center text-gray-800"><i class="fas fa-info-circle mr-2 text-blue-500"></i>상태 및 로그</h2>
+        <!-- [수정됨] 로그 배경을 카드보다 밝게 조정 -->
+        <div id="statusLog" class="bg-gray-100 rounded-lg p-4 max-h-60 overflow-y-auto"><p id="initialLogMessage" class="text-gray-500">준비 완료.</p></div>
       </div>
       
-      <!-- API Section -->
-      <div class="bg-gray-700 rounded-lg shadow-lg p-6 mt-8 border border-gray-600">
+      <!-- [수정됨] 카드를 약간 더 어두운 회색으로 변경 -->
+      <div class="bg-gray-200 rounded-lg shadow-lg p-6 mt-8">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold flex items-center text-gray-100">
-                <i class="fas fa-key mr-2 text-yellow-400"></i>
-                <span class="text-gray-100">API</span>
+            <h2 class="text-xl font-semibold flex items-center text-gray-800">
+                <i class="fas fa-key mr-2 text-yellow-500"></i><span class="text-black">API</span>
                 <span id="apiCombinedStatus" class="ml-3 text-xl"></span>
             </h2>
         </div>
-        <input type="text" id="apiToken" class="w-full p-3 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-800 text-gray-200" placeholder="Real-Debrid API 토큰을 입력하세요" />
-        <p class="text-xs text-gray-400 mt-2">
-          API 토큰은 <a href="https://real-debrid.com/apitoken" target="_blank" class="text-indigo-400 underline">real-debrid.com/apitoken</a> 에서 발급받을 수 있습니다.<br/>
-          <span class="text-red-400">연결 실패 시:</span> 토큰이 정확한지, 인터넷 연결, 브라우저 확장 프로그램(광고 차단 등)을 확인해주세요.
+        <input type="text" id="apiToken" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Real-Debrid API 토큰을 입력하세요" />
+        <p class="text-xs text-gray-500 mt-2">
+          API 토큰은 <a href="https://real-debrid.com/apitoken" target="_blank" class="text-blue-600 underline">real-debrid.com/apitoken</a> 에서 발급받을 수 있습니다.<br/>
+          <span class="text-red-500">연결 실패 시:</span> 토큰이 정확한지, 인터넷 연결, 브라우저 확장 프로그램(광고 차단 등)을 확인해주세요.
         </p>
         <div class="flex gap-4 mt-4">
-          <button onclick="saveToken()" class="flex-1 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700"><i class="fas fa-save mr-2"></i>저장</button>
-          <button onclick="testConnection()" class="flex-1 px-6 py-3 bg-green-700 text-white font-semibold rounded-lg hover:bg-green-600"><i class="fas fa-plug mr-2"></i>연결 테스트</button>
+          <button onclick="saveToken()" class="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700"><i class="fas fa-save mr-2"></i>저장</button>
+          <button onclick="testConnection()" class="flex-1 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700"><i class="fas fa-plug mr-2"></i>연결 테스트</button>
         </div>
       </div>
     </div>
@@ -110,7 +110,7 @@
     <div id="toastContainer" class="toast"></div>
     <script src="cordova.js"></script>
     <script>
-        // JavaScript 로직은 변경되지 않았으므로 그대로 유지됩니다.
+        // JavaScript 로직은 변경되지 않았습니다.
         const API_BASE = "https://api.real-debrid.com/rest/1.0";
         let refreshTimer = null;
         let fastRefreshCount = 0;
@@ -125,7 +125,7 @@
             const updateTimeEl = document.getElementById("trackerUpdateTime");
             const curatedTrackers = [ 'udp://tracker.opentrackr.org:1337/announce', 'udp://open.stealth.si:80/announce', 'udp://exodus.desync.com:6969/announce', 'udp://tracker.torrent.eu.org:451/announce', 'udp://tracker.cyberia.is:6969/announce', 'udp://tracker.openbittorrent.com:80/announce', 'udp://tracker.zer0day.to:1337/announce', 'udp://p4p.arenabg.com:1337/announce', 'udp://tracker.leechers-paradise.org:6969/announce', 'udp://9.rarbg.to:2710/announce', 'http://open.tracker.cl:1337/announce', 'udp://open.demonii.com:1337/announce', 'udp://explodie.org:6969/announce', 'udp://public.tracker.vraphim.com:6969/announce', 'udp://tracker.dler.org:6969/announce' ];
             const externalTrackerUrls = [ 'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt', 'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all_ip.txt' ];
-            statusIcon.innerHTML = '<i class="fas fa-spinner loading text-purple-400"></i>';
+            statusIcon.innerHTML = '<i class="fas fa-spinner loading text-purple-500"></i>';
             addLog(`최신 통합 트래커 목록을 불러옵니다...`);
             try {
                 const responses = await Promise.all(externalTrackerUrls.map(url => fetch(url)));
@@ -135,7 +135,7 @@
                 const uniqueTrackers = [...new Set(combinedTrackers.map(l => l.trim()).filter(Boolean))];
                 if (uniqueTrackers.length > 0) {
                     trackerInput.value = uniqueTrackers.join('\n');
-                    statusIcon.innerHTML = '<i class="fas fa-check-circle text-green-400" title="최신 트래커 로딩 완료"></i>';
+                    statusIcon.innerHTML = '<i class="fas fa-check-circle text-green-500" title="최신 트래커 로딩 완료"></i>';
                     const message = `통합된 고유 트래커 ${uniqueTrackers.length}개를 불러왔습니다.`;
                     showToast(message, 'success');
                     const now = new Date();
@@ -143,7 +143,7 @@
                     updateTimeEl.innerHTML = `${uniqueTrackers.length}개<br class="md:hidden"> ${formattedTime}`;
                 } else { throw new Error('불러온 트래커 목록이 비어있습니다.'); }
             } catch (error) {
-                statusIcon.innerHTML = '<i class="fas fa-times-circle text-red-400" title="트래커 로딩 실패"></i>';
+                statusIcon.innerHTML = '<i class="fas fa-times-circle text-red-500" title="트래커 로딩 실패"></i>';
                 const errorMessage = `트래커 로딩 실패: ${error.message}`;
                 addLog(errorMessage, 'error');
                 showToast(errorMessage, 'error');
@@ -152,15 +152,15 @@
         }
         
         async function handleUnifiedUpload(button) { const magnetInput = document.getElementById("magnetInput"); const fileInput = document.getElementById("torrentFile"); const trackerInput = document.getElementById("trackerInput"); const magnetsRaw = magnetInput.value.trim().split('\n'); const magnets = magnetsRaw.map(link => { const match = link.trim().match(/(magnet:\?xt=urn:btih:[a-zA-Z0-9]{40})/); return match ? match[1] : null; }).filter(Boolean); const fileToUpload = fileInput.files[0]; const trackers = trackerInput.value.trim().split("\n").filter(Boolean); if (magnets.length === 0 && !fileToUpload) { showToast("추가할 유효한 마그넷 링크나 토렌트 파일이 없습니다.", "warning"); addLog("유효한 마그넷을 찾지 못했습니다. magnet:?xt=urn:btih: 형식인지 확인하세요.", "warning"); return; } setLoading(button, true); let successCount = 0; let errorCount = 0; addLog(`총 ${magnets.length}개의 마그넷과 ${fileToUpload ? 1 : 0}개의 파일 처리를 시작합니다.`); try { if (magnets.length > 0) { const trackerString = trackers.map((tr) => `&tr=${encodeURIComponent(tr.trim())}`).join(""); if (trackerString) addLog(`${trackers.length}개의 트래커를 각 마그넷에 추가합니다.`); for (const [index, magnet] of magnets.entries()) { addLog(`[${index + 1}/${magnets.length}] 마그넷 추가 시도 중...`); try { const finalMagnet = magnet + trackerString; const response = await makeApiCall("/torrents/addMagnet", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: `magnet=${encodeURIComponent(finalMagnet)}` }); if (response && response.id) { addLog(`[${index + 1}/${magnets.length}] ID ${response.id} 추가 성공. 파일 선택을 시작합니다.`); await makeApiCall(`/torrents/selectFiles/${response.id}`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "files=all" }); addLog(`[${index + 1}/${magnets.length}] ID ${response.id} 파일 선택 완료. 다운로드가 시작됩니다.`, "success"); successCount++; } else { throw new Error("API 응답에서 토렌트 ID를 받지 못했습니다."); } } catch (e) { errorCount++; addLog(`[${index + 1}/${magnets.length}] 처리 중 오류 발생: ${e.message}`, "error"); } } } if (fileToUpload) { addLog(`토렌트 파일(${fileToUpload.name}) 추가 시도 중...`); try { const response = await makeApiCall("/torrents/addTorrent", { method: "PUT", body: fileToUpload }); if (response && response.id) { addLog(`파일 추가 성공. ID ${response.id} 파일 선택을 시작합니다.`); await makeApiCall(`/torrents/selectFiles/${response.id}`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "files=all" }); addLog(`ID ${response.id} 파일 선택 완료. 다운로드가 시작됩니다.`, "success"); successCount++; } else { throw new Error("API 응답에서 토렌트 ID를 받지 못했습니다."); } } catch (e) { errorCount++; addLog(`토렌트 파일 처리 중 오류 발생: ${e.message}`, "error"); } } if (successCount > 0) showToast(`총 ${successCount}개 항목의 다운로드를 성공적으로 시작했습니다.`, "success"); if (errorCount > 0) showToast(`${errorCount}개 항목 추가에 실패했습니다. 로그를 확인하세요.`, "error"); magnetInput.value = ""; fileInput.value = ""; document.getElementById('magnetPlaceholder').classList.remove('opacity-0'); displayFileName(); setTimeout(() => startOrResetRefreshCycle(), 1500); } catch (error) { showToast(`업로드 중 오류 발생: ${error.message}`, "error"); } finally { setLoading(button, false); } }
-        async function refreshTorrents(){ try{ addLog("토렌트 목록을 불러오는 중..."); const torrents = await makeApiCall("/torrents?limit=1000"); const totalBytes = torrents.reduce((sum, torrent) => sum + torrent.bytes, 0); document.getElementById('apiListSize').innerHTML = `📚 ${formatSize(totalBytes)}`; displayTorrents(torrents); } catch(e) { showToast("토렌트 목록 로드 실패: "+e.message,"error"); document.getElementById("torrentList").innerHTML=`<p class="text-red-400 text-center py-8">${e.message}</p>`; } }
-        function displayTorrents(torrents) { const listEl = document.getElementById("torrentList"); if (torrents && torrents.length > 0) { listEl.innerHTML = torrents.map(t => ` <div class="border-b border-gray-600 p-3 hover:bg-gray-600/50 transition duration-200"> <div class="flex justify-between items-start mb-2"> <h3 class="font-semibold text-gray-100 flex-1 mr-4 overflow-hidden text-ellipsis whitespace-nowrap min-w-0" title="${t.filename}">${t.filename || "Unknown"}</h3> <span class="px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${getStatusClass(t.status)}">${getStatusText(t.status)}</span> </div> <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-gray-400 mb-3"> <div><i class="fas fa-hdd mr-1 text-gray-500"></i> ${formatSize(t.bytes)}</div> <div><i class="fas fa-arrow-down mr-1 text-green-500"></i> ${formatSize(t.speed || 0)}/s</div> <div><i class="fas fa-clock mr-1 text-gray-500"></i> ${new Date(t.added).toLocaleString()}</div> </div> ${t.progress >= 0 ? `<div class="w-full bg-gray-600 rounded-full h-2.5 mb-3"><div class="bg-indigo-600 h-2.5 rounded-full" style="width: ${t.progress}%"></div></div>` : ""} <div class="flex justify-between items-center"> <div class="flex gap-2 flex-wrap"> <button onclick="deleteTorrent('${t.id}')" class="px-3 py-1 bg-red-800 text-white text-xs font-semibold rounded hover:bg-red-700"><i class="fas fa-trash mr-1"></i>삭제</button> ${t.status === "waiting_files_selection" ? `<button onclick="selectFiles('${t.id}')" class="px-3 py-1 bg-indigo-600 text-white text-xs font-semibold rounded hover:bg-indigo-700"><i class="fas fa-check-square mr-1"></i>파일 선택</button>` : ""} </div> <div> ${t.status === "downloaded" ? `<button onclick="getTorrentInfo('${t.id}')" class="px-3 py-1 bg-green-700 text-white text-xs font-semibold rounded hover:bg-green-600"><i class="fas fa-download mr-1"></i>다운로드 링크 보기</button>` : ""} </div> </div> </div>`).join(""); } else { listEl.innerHTML = '<p class="text-gray-400 text-center py-8">활성 토렌트가 없습니다.</p>'; } }
-        function getStatusClass(status) { return { waiting_files_selection: "bg-yellow-400/20 text-yellow-300", queued: "bg-gray-500/20 text-gray-400", downloading: "bg-indigo-400/20 text-indigo-300", downloaded: "bg-green-400/20 text-green-300", error: "bg-red-400/20 text-red-300", dead: "bg-red-500/30 text-red-400" }[status] || "bg-gray-600 text-gray-300"; }
+        async function refreshTorrents(){ try{ addLog("토렌트 목록을 불러오는 중..."); const torrents = await makeApiCall("/torrents?limit=1000"); const totalBytes = torrents.reduce((sum, torrent) => sum + torrent.bytes, 0); document.getElementById('apiListSize').innerHTML = `📚 ${formatSize(totalBytes)}`; displayTorrents(torrents); } catch(e) { showToast("토렌트 목록 로드 실패: "+e.message,"error"); document.getElementById("torrentList").innerHTML=`<p class="text-red-500 text-center py-8">${e.message}</p>`; } }
+        function displayTorrents(torrents) { const listEl = document.getElementById("torrentList"); if (torrents && torrents.length > 0) { listEl.innerHTML = torrents.map(t => ` <div class="border-b border-gray-300 p-3 hover:bg-gray-300 transition duration-200"> <div class="flex justify-between items-start mb-2"> <h3 class="font-semibold text-gray-800 flex-1 mr-4 overflow-hidden text-ellipsis whitespace-nowrap min-w-0" title="${t.filename}">${t.filename || "Unknown"}</h3> <span class="px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${getStatusClass(t.status)}">${getStatusText(t.status)}</span> </div> <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-gray-600 mb-3"> <div><i class="fas fa-hdd mr-1 text-gray-400"></i> ${formatSize(t.bytes)}</div> <div><i class="fas fa-arrow-down mr-1 text-green-500"></i> ${formatSize(t.speed || 0)}/s</div> <div><i class="fas fa-clock mr-1 text-gray-400"></i> ${new Date(t.added).toLocaleString()}</div> </div> ${t.progress >= 0 ? `<div class="w-full bg-gray-300 rounded-full h-2.5 mb-3"><div class="bg-blue-600 h-2.5 rounded-full" style="width: ${t.progress}%"></div></div>` : ""} <div class="flex justify-between items-center"> <div class="flex gap-2 flex-wrap"> <button onclick="deleteTorrent('${t.id}')" class="px-3 py-1 bg-red-600 text-white text-xs font-semibold rounded hover:bg-red-700"><i class="fas fa-trash mr-1"></i>삭제</button> ${t.status === "waiting_files_selection" ? `<button onclick="selectFiles('${t.id}')" class="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700"><i class="fas fa-check-square mr-1"></i>파일 선택</button>` : ""} </div> <div> ${t.status === "downloaded" ? `<button onclick="getTorrentInfo('${t.id}')" class="px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded hover:bg-green-700"><i class="fas fa-download mr-1"></i>다운로드 링크 보기</button>` : ""} </div> </div> </div>`).join(""); } else { listEl.innerHTML = '<p class="text-gray-500 text-center py-8">활성 토렌트가 없습니다.</p>'; } }
+        function getStatusClass(status) { return { waiting_files_selection: "bg-yellow-100 text-yellow-800", queued: "bg-gray-200 text-gray-800", downloading: "bg-blue-100 text-blue-800", downloaded: "bg-green-100 text-green-800", error: "bg-red-100 text-red-800", dead: "bg-red-200 text-red-900" }[status] || "bg-gray-100 text-gray-800"; }
         function getStatusText(status) { return { waiting_files_selection: "파일 선택 대기", queued: "대기 중", downloading: "다운로드 중", downloaded: "완료", error: "오류", dead: "데드 토렌트" }[status] || status; }
         function formatSize(bytes) { if (bytes === 0) return "0 B"; const k = 1024; const sizes = ["B", "KB", "MB", "GB", "TB"]; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]; }
         async function deleteTorrent(id) { if (!confirm("이 토렌트를 목록에서 삭제하시겠습니까?")) return; try { await makeApiCall(`/torrents/delete/${id}`, { method: "DELETE" }); showToast("토렌트가 삭제되었습니다", "success"); await refreshTorrents(); } catch (e) { showToast("삭제 실패: " + e.message, "error"); } }
         async function deleteCompleted() { if (!confirm("완료된 모든 토렌트를 목록에서 삭제하시겠습니까?")) return; addLog("완료된 토렌트 삭제를 시작합니다..."); try { const torrents = await makeApiCall("/torrents?limit=1000"); const completed = torrents.filter(t => t.status === 'downloaded'); if (completed.length === 0) { showToast("삭제할 완료된 토렌트가 없습니다.", "info"); addLog("삭제할 완료된 항목이 없습니다."); return; } let deletedCount = 0; for (const torrent of completed) { await makeApiCall(`/torrents/delete/${torrent.id}`, { method: "DELETE" }); deletedCount++; } showToast(`${deletedCount}개의 완료된 토렌트가 삭제되었습니다.`, "success"); addLog(`${deletedCount}개의 완료된 토렌트를 성공적으로 삭제했습니다.`, "success"); await refreshTorrents(); } catch (error) { showToast("완료된 토렌트 삭제 중 오류 발생.", "error"); addLog(`완료된 항목 삭제 실패: ${error.message}`, "error"); } }
         async function selectFiles(id) { try { addLog(`ID ${id}: 모든 파일을 선택합니다.`); await makeApiCall(`/torrents/selectFiles/${id}`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "files=all" }); showToast("모든 파일이 선택되어 다운로드가 시작됩니다.", "success"); await refreshTorrents(); } catch (e) { showToast("파일 선택 실패: " + e.message, "error"); } }
-        async function getTorrentInfo(torrentId) { try { addLog(`ID ${torrentId}: 다운로드 링크를 조회합니다.`); const info = await makeApiCall(`/torrents/info/${torrentId}`); addLog(`진단: ${info.links.length}개의 링크와 ${info.files.length}개의 파일을 찾았습니다.`); const MIN_FILE_SIZE = 10 * 1024; const filteredFiles = info.files .map((file, index) => ({ ...file, link: info.links[index] })) .filter(file => file.bytes >= MIN_FILE_SIZE); const originalCount = info.files.length; const filteredCount = filteredFiles.length; const hiddenCount = originalCount - filteredCount; if (hiddenCount > 0) { addLog(`진단: ${hiddenCount}개 파일(10KB 미만)을 목록에서 숨겼습니다.`); } const fileListHTML = filteredFiles.map(file => { return `<li class="p-2 my-1 border border-gray-600 rounded flex justify-between items-center text-sm hover:bg-gray-600/50"> <span class="flex-1 mr-4 break-all text-gray-300"><i class="fas fa-file-alt mr-2 text-gray-500"></i>${file.path} (${formatSize(file.bytes)})</span> <a href="${file.link}" target="_blank" class="px-3 py-1 bg-green-700 text-white text-xs font-semibold rounded hover:bg-green-600 whitespace-nowrap"><i class="fas fa-download mr-1"></i>다운로드</a> </li>`; }).join(''); const modalHTML = `<div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 fade-in" onclick="this.remove()"><div class="bg-gray-700 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col border border-gray-600" onclick="event.stopPropagation()"><div class="flex justify-between items-center mb-4 border-b border-gray-600 pb-3"><h3 class="text-lg font-semibold text-gray-100">다운로드 링크</h3><button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button></div><div class="overflow-y-auto"><p class="mb-2 text-gray-300"><strong>파일명:</strong> ${info.filename}</p><p class="mb-4 text-gray-300"><strong>총 크기:</strong> ${formatSize(info.bytes)}</p>${hiddenCount > 0 ? `<p class="text-sm text-yellow-300 mb-4 text-center p-2 bg-yellow-400/20 rounded-md"><i class="fas fa-info-circle mr-2"></i>${hiddenCount}개의 작은 파일(10KB 미만)이 목록에서 자동으로 숨김 처리되었습니다.</p>` : ''}${fileListHTML ? `<ul class="mt-2 space-y-2">${fileListHTML}</ul>` : "<p class='text-yellow-400'>다운로드 링크가 아직 생성되지 않았거나, 모든 파일이 10KB 미만입니다.</p>"}</div><button onclick="this.closest('.fixed').remove()" class="mt-4 px-4 py-2 bg-gray-600 text-white rounded self-end hover:bg-gray-500">닫기</button></div></div>`; document.body.insertAdjacentHTML('beforeend', modalHTML); } catch(error) { showToast("토렌트 정보 로드에 실패했습니다.", "error"); addLog(`토렌트 정보 로드 실패: ${error.message}`, 'error'); } }
+        async function getTorrentInfo(torrentId) { try { addLog(`ID ${torrentId}: 다운로드 링크를 조회합니다.`); const info = await makeApiCall(`/torrents/info/${torrentId}`); addLog(`진단: ${info.links.length}개의 링크와 ${info.files.length}개의 파일을 찾았습니다.`); const MIN_FILE_SIZE = 10 * 1024; const filteredFiles = info.files .map((file, index) => ({ ...file, link: info.links[index] })) .filter(file => file.bytes >= MIN_FILE_SIZE); const originalCount = info.files.length; const filteredCount = filteredFiles.length; const hiddenCount = originalCount - filteredCount; if (hiddenCount > 0) { addLog(`진단: ${hiddenCount}개 파일(10KB 미만)을 목록에서 숨겼습니다.`); } const fileListHTML = filteredFiles.map(file => { return `<li class="p-2 my-1 border border-gray-300 rounded flex justify-between items-center text-sm hover:bg-gray-300"> <span class="flex-1 mr-4 break-all text-gray-700"><i class="fas fa-file-alt mr-2 text-gray-500"></i>${file.path} (${formatSize(file.bytes)})</span> <a href="${file.link}" target="_blank" class="px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded hover:bg-green-700 whitespace-nowrap"><i class="fas fa-download mr-1"></i>다운로드</a> </li>`; }).join(''); const modalHTML = `<div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 fade-in" onclick="this.remove()"><div class="bg-gray-200 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col" onclick="event.stopPropagation()"><div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-3"><h3 class="text-lg font-semibold text-gray-800">다운로드 링크</h3><button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button></div><div class="overflow-y-auto"><p class="mb-2 text-gray-800"><strong>파일명:</strong> ${info.filename}</p><p class="mb-4 text-gray-800"><strong>총 크기:</strong> ${formatSize(info.bytes)}</p>${hiddenCount > 0 ? `<p class="text-sm text-gray-600 mb-4 text-center p-2 bg-yellow-100 rounded-md"><i class="fas fa-info-circle mr-2 text-yellow-500"></i>${hiddenCount}개의 작은 파일(10KB 미만)이 목록에서 자동으로 숨김 처리되었습니다.</p>` : ''}${fileListHTML ? `<ul class="mt-2 space-y-2">${fileListHTML}</ul>` : "<p class='text-yellow-600'>다운로드 링크가 아직 생성되지 않았거나, 모든 파일이 10KB 미만입니다.</p>"}</div><button onclick="this.closest('.fixed').remove()" class="mt-4 px-4 py-2 bg-gray-600 text-white rounded self-end hover:bg-gray-700">닫기</button></div></div>`; document.body.insertAdjacentHTML('beforeend', modalHTML); } catch(error) { showToast("토렌트 정보 로드에 실패했습니다.", "error"); addLog(`토렌트 정보 로드 실패: ${error.message}`, 'error'); } }
         
         async function makeApiCall(t,e={}){const n=getToken();if(!n)throw new Error("API 토큰이 설정되지 않았습니다.");const o=`${API_BASE}${t}`,s={...e,headers:{Authorization:`Bearer ${n}`,...(e.headers||{})}};try{const i=await fetch(o,s);if(i.status===204)return null;const a=await i.json();if(!i.ok){const r=a&&a.error?`${a.error_code} - ${a.error}`:i.statusText;throw new Error(`API 오류: ${i.status} - ${r}`)}return a}catch(c){throw addLog(`API 호출 실패: ${c.message}`,"error"),c}}
         function getToken(){return localStorage.getItem("rdToken")}
@@ -168,7 +168,7 @@
 
         async function testConnection() {
             const apiCombinedStatusEl = document.getElementById('apiCombinedStatus');
-            apiCombinedStatusEl.innerHTML = `<span class="font-bold text-yellow-400">확인 중...</span>`;
+            apiCombinedStatusEl.innerHTML = `<span class="font-bold text-yellow-500">확인 중...</span>`;
             try {
                 addLog("API 연결을 테스트합니다...");
                 const user = await makeApiCall("/user");
@@ -180,19 +180,19 @@
                     const diffDays = Math.ceil((expirationDate - now) / (1000 * 60 * 60 * 24));
                     const formattedExpiration = expirationDate.toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
                     let dDayText = `D-${diffDays}`;
-                    let colorClass = 'text-green-400';
-                    if (diffDays <= 0) { dDayText = '만료'; colorClass = 'text-red-400'; } 
-                    else if (diffDays <= 7) { colorClass = 'text-yellow-400'; showToast(`프리미엄 만료일이 ${diffDays}일 남았습니다.`, 'warning'); }
-                    apiCombinedStatusEl.innerHTML = `<span class="font-semibold ${colorClass}">${formattedExpiration} (<span class="font-black">${dDayText}</span>)</span>, <span class="font-bold text-indigo-400">${user.points}P</span>`;
-                } else { apiCombinedStatusEl.innerHTML = `<span class="font-bold text-red-400">프리미엄 아님</span>`; }
+                    let colorClass = 'text-green-600';
+                    if (diffDays <= 0) { dDayText = '만료'; colorClass = 'text-red-600'; } 
+                    else if (diffDays <= 7) { colorClass = 'text-yellow-600'; showToast(`프리미엄 만료일이 ${diffDays}일 남았습니다.`, 'warning'); }
+                    apiCombinedStatusEl.innerHTML = `<span class="font-semibold ${colorClass}">${formattedExpiration} (<span class="font-black">${dDayText}</span>)</span>, <span class="font-bold text-blue-600">${user.points}P</span>`;
+                } else { apiCombinedStatusEl.innerHTML = `<span class="font-bold text-red-600">프리미엄 아님</span>`; }
             } catch (e) {
                 showToast(`연결 실패: ${e.message}`, "error");
-                apiCombinedStatusEl.innerHTML = `<span class="font-bold text-red-400" title="${e.message}">연결 실패</span>`;
+                apiCombinedStatusEl.innerHTML = `<span class="font-bold text-red-500" title="${e.message}">연결 실패</span>`;
             }
         }
         
-        function addLog(message, type = "info") { const logEl = document.getElementById("statusLog"); const time = new Date().toLocaleTimeString(); const iconClass = type === "error" ? "fa-times-circle text-red-400" : type === "success" ? "fa-check-circle text-green-400" : type === "warning" ? "fa-exclamation-triangle text-yellow-400" : "fa-info-circle text-indigo-400"; const initialMsg = document.getElementById("initialLogMessage"); if (initialMsg) initialMsg.remove(); const entry = document.createElement("div"); entry.className = `mb-2 p-2 border-l-4 ${type === "error" ? "border-red-400 bg-red-400/10" : type === "success" ? "border-green-400 bg-green-400/10" : type === "warning" ? "border-yellow-400 bg-yellow-400/10" : "border-indigo-400 bg-indigo-400/10"}`; entry.innerHTML = `<span class="text-xs text-gray-400">[${time}]</span> <i class="fas ${iconClass} ml-2 mr-2"></i> <span>${message}</span>`; logEl.appendChild(entry); logEl.scrollTop = logEl.scrollHeight; }
-        function showToast(message, type = "info") { const container = document.getElementById("toastContainer"); const toast = document.createElement("div"); const iconClass = type === "success" ? "fa-check-circle" : type === "error" ? "fa-exclamation-circle" : type === "warning" ? "fa-exclamation-triangle" : "fa-info-circle"; const bgColor = type === "success" ? "bg-green-700" : type === "error" ? "bg-red-800" : type === "warning" ? "bg-yellow-500" : "bg-indigo-600"; toast.className = `fade-in px-6 py-4 rounded-lg text-white mb-4 shadow-lg ${bgColor}`; toast.innerHTML = `<div class="flex items-center"><i class="fas ${iconClass} mr-3"></i><span class="font-semibold">${message}</span></div>`; container.appendChild(toast); setTimeout(() => { toast.style.opacity = "0"; setTimeout(() => toast.remove(), 300); }, 5000); }
+        function addLog(message, type = "info") { const logEl = document.getElementById("statusLog"); const time = new Date().toLocaleTimeString(); const iconClass = type === "error" ? "fa-times-circle text-red-500" : type === "success" ? "fa-check-circle text-green-500" : type === "warning" ? "fa-exclamation-triangle text-yellow-500" : "fa-info-circle text-blue-500"; const initialMsg = document.getElementById("initialLogMessage"); if (initialMsg) initialMsg.remove(); const entry = document.createElement("div"); entry.className = `mb-2 p-2 border-l-4 ${type === "error" ? "border-red-400 bg-red-50" : type === "success" ? "border-green-400 bg-green-50" : type === "warning" ? "border-yellow-400 bg-yellow-50" : "border-blue-400 bg-blue-50"}`; entry.innerHTML = `<span class="text-xs text-gray-500">[${time}]</span> <i class="fas ${iconClass} ml-2 mr-2"></i> <span>${message}</span>`; logEl.appendChild(entry); logEl.scrollTop = logEl.scrollHeight; }
+        function showToast(message, type = "info") { const container = document.getElementById("toastContainer"); const toast = document.createElement("div"); const iconClass = type === "success" ? "fa-check-circle" : type === "error" ? "fa-exclamation-circle" : type === "warning" ? "fa-exclamation-triangle" : "fa-info-circle"; const bgColor = type === "success" ? "bg-green-500" : type === "error" ? "bg-red-600" : type === "warning" ? "bg-yellow-500" : "bg-blue-500"; toast.className = `fade-in px-6 py-4 rounded-lg text-white mb-4 shadow-lg ${bgColor}`; toast.innerHTML = `<div class="flex items-center"><i class="fas ${iconClass} mr-3"></i><span class="font-semibold">${message}</span></div>`; container.appendChild(toast); setTimeout(() => { toast.style.opacity = "0"; setTimeout(() => toast.remove(), 300); }, 5000); }
         function setLoading(button, isLoading) {
             if (!button) return;
             if (isLoading) {
@@ -208,9 +208,9 @@
             const fileInput = document.getElementById("torrentFile");
             const dropZoneContent = document.getElementById("dropZoneContent");
             if (fileInput.files.length > 0) {
-                dropZoneContent.innerHTML = `<div class="text-center"><i class="fas fa-check-circle text-green-400 mr-2"></i> <strong class="text-gray-200">${fileInput.files[0].name}</strong> <span class="text-gray-400">(${formatSize(fileInput.files[0].size)})</span></div>`;
+                dropZoneContent.innerHTML = `<div class="text-center"><i class="fas fa-check-circle text-green-500 mr-2"></i> <strong>${fileInput.files[0].name}</strong> (${formatSize(fileInput.files[0].size)})</div>`;
             } else {
-                dropZoneContent.innerHTML = `<i class="fas fa-cloud-upload-alt text-4xl text-gray-500"></i>`;
+                dropZoneContent.innerHTML = `<i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i>`;
             }
         }
         
@@ -231,8 +231,8 @@
             const dropZone = document.getElementById("dropZone");
             dropZone.addEventListener("click", () => document.getElementById("torrentFile").click());
             ["dragover", "dragleave", "drop"].forEach(eventName => { dropZone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }); });
-            ["dragenter", "dragover"].forEach(eventName => { dropZone.addEventListener(eventName, () => { dropZone.classList.add("border-indigo-500", "bg-gray-600/50"); }); });
-            ["dragleave", "drop"].forEach(eventName => { dropZone.addEventListener(eventName, () => { dropZone.classList.remove("border-indigo-500", "bg-gray-600/50"); }); });
+            ["dragenter", "dragover"].forEach(eventName => { dropZone.addEventListener(eventName, () => { dropZone.classList.add("border-blue-400", "bg-blue-50"); }); });
+            ["dragleave", "drop"].forEach(eventName => { dropZone.addEventListener(eventName, () => { dropZone.classList.remove("border-blue-400", "bg-blue-50"); }); });
             dropZone.addEventListener("drop", event => { const files = event.dataTransfer.files; if (files.length > 0 && files[0].name.endsWith(".torrent")) { document.getElementById("torrentFile").files = files; displayFileName(); } else { showToast("유효한 .torrent 파일이 아닙니다", "error"); } });
 
             const magnetInput = document.getElementById('magnetInput');
