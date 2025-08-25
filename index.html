@@ -11,9 +11,7 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
     <style>
-      /* [수정됨] 회전 애니메이션 제거 */
       .loading { /* animation: spin 1s linear infinite; */ }
-      /* @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } */
       .fade-in { animation: fadeIn 0.3s ease-in; }
       @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
       .toast { position: fixed; top: 20px; right: 20px; z-index: 1000; }
@@ -34,15 +32,14 @@
       <!-- Input Section -->
       <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
         <div class="flex flex-col md:flex-row gap-6">
-            <!-- [수정됨] 모바일 높이 고정 및 아이콘 표시 구조 변경 -->
             <div class="flex-1 flex relative h-32 md:h-auto">
                 <div id="magnetPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-opacity duration-300">
                     <i class="fas fa-magnet text-4xl text-gray-400"></i>
-                    <p class="mt-4 text-gray-500">magnet:?xt=</p>
+                    <!-- [수정됨] 텍스트 'magnet'으로 간소화 -->
+                    <p class="mt-4 text-gray-500">magnet</p>
                 </div>
                 <textarea id="magnetInput" rows="2" class="w-full h-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-left bg-transparent z-10 md:min-h-[128px]"></textarea>
             </div>
-            <!-- [수정됨] 모바일 높이 고정 -->
             <div class="flex-1 flex h-32 md:h-auto">
                 <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center w-full h-full flex flex-col justify-center items-center relative" id="dropZone">
                     <input type="file" id="torrentFile" accept=".torrent" class="hidden" onchange="displayFileName()" />
@@ -56,7 +53,6 @@
         <div class="mt-6">
           <div class="flex justify-between items-center mb-1">
             <label for="trackerInput" class="block text-sm font-medium text-gray-700 flex items-center">
-                <!-- [수정됨] 아이콘을 클릭 가능하도록 변경 -->
                 <span class="cursor-pointer" onclick="fetchBestTrackers()">
                     <i class="fas fa-satellite-dish mr-2 text-purple-500"></i>
                 </span>
@@ -65,7 +61,8 @@
             </label>
           </div>
           <div class="relative">
-            <textarea id="trackerInput" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="최신 통합 트래커 목록을 자동으로 불러오는 중입니다..."></textarea>
+            <!-- [수정됨] textarea를 input으로 변경하여 한 줄로 표시 -->
+            <input type="text" id="trackerInput" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="최신 통합 트래커 목록을 자동으로 불러오는 중입니다..." />
           </div>
         </div>
         <button onclick="handleUnifiedUpload(this)" id="unifiedUploadButton" class="w-full mt-6 px-4 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-200 flex items-center justify-center text-lg"><i class="fas fa-upload mr-2"></i><span>추가하기</span><i class="fas fa-spinner loading ml-2 hidden"></i></button>
@@ -120,7 +117,6 @@
       function scheduledRefresh() { if (fastRefreshCount > 0) { addLog(`[자동 갱신] 1분 간격으로 목록을 새로고침합니다. (남은 횟수: ${fastRefreshCount - 1}회)`); refreshTorrents(); fastRefreshCount--; if (fastRefreshCount === 0) { addLog("빠른 갱신이 종료되었습니다. 5분 간격 갱신으로 전환합니다."); clearInterval(refreshTimer); if (slowRefreshCount > 0) { refreshTimer = setInterval(scheduledRefresh, 300000); } } } else if (slowRefreshCount > 0) { addLog(`[자동 갱신] 5분 간격으로 목록을 새로고침합니다. (남은 횟수: ${slowRefreshCount - 1}회)`); refreshTorrents(); slowRefreshCount--; if (slowRefreshCount === 0) { addLog("자동 갱신 주기가 모두 종료되었습니다. 수동으로 새로고침해주세요."); clearInterval(refreshTimer); refreshTimer = null; } } else { if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; } } }
       function startOrResetRefreshCycle() { if (refreshTimer) clearInterval(refreshTimer); addLog("자동 갱신 주기를 시작합니다. (5분간 1분 간격, 이후 55분간 5분 간격)"); fastRefreshCount = 5; slowRefreshCount = 11; scheduledRefresh(); refreshTimer = setInterval(scheduledRefresh, 60000); }
       
-      // [수정됨] 버튼 인자 제거, 직접 아이콘 상태 변경
       async function fetchBestTrackers() {
         const trackerInput = document.getElementById("trackerInput");
         const statusIcon = document.getElementById("trackerStatusIcon");
@@ -146,7 +142,6 @@
                 
                 const now = new Date();
                 const formattedTime = now.toLocaleString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                // [수정됨] 모바일에서 줄바꿈되도록 <br> 태그 추가
                 updateTimeEl.innerHTML = `${uniqueTrackers.length}개<br class="md:hidden"> ${formattedTime}`;
             } else { throw new Error('불러온 트래커 목록이 비어있습니다.'); }
         } catch (error) {
