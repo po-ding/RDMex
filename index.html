@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<!-- test -->
 <html lang="ko">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>🚀 RDMex</title>
+    <title>RDMex</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap:; connect-src 'self' https://api.real-debrid.com https://raw.githubusercontent.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
@@ -119,49 +118,15 @@
       async function deleteTorrent(id) { if (!confirm("이 토렌트를 목록에서 삭제하시겠습니까?")) return; try { await makeApiCall(`/torrents/delete/${id}`, { method: "DELETE" }); showToast("토렌트가 삭제되었습니다", "success"); await refreshTorrents(); } catch (e) { showToast("삭제 실패: " + e.message, "error"); } }
       async function deleteCompleted() { if (!confirm("완료된 모든 토렌트를 목록에서 삭제하시겠습니까?")) return; addLog("완료된 토렌트 삭제를 시작합니다..."); try { const torrents = await makeApiCall("/torrents?limit=1000"); const completed = torrents.filter(t => t.status === 'downloaded'); if (completed.length === 0) { showToast("삭제할 완료된 토렌트가 없습니다.", "info"); addLog("삭제할 완료된 항목이 없습니다."); return; } let deletedCount = 0; for (const torrent of completed) { await makeApiCall(`/torrents/delete/${torrent.id}`, { method: "DELETE" }); deletedCount++; } showToast(`${deletedCount}개의 완료된 토렌트가 삭제되었습니다.`, "success"); addLog(`${deletedCount}개의 완료된 토렌트를 성공적으로 삭제했습니다.`, "success"); await refreshTorrents(); } catch (error) { showToast("완료된 토렌트 삭제 중 오류 발생.", "error"); addLog(`완료된 항목 삭제 실패: ${error.message}`, "error"); } }
       async function selectFiles(id) { try { addLog(`ID ${id}: 모든 파일을 선택합니다.`); await makeApiCall(`/torrents/selectFiles/${id}`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "files=all" }); showToast("모든 파일이 선택되어 다운로드가 시작됩니다.", "success"); await refreshTorrents(); } catch (e) { showToast("파일 선택 실패: " + e.message, "error"); } }
-      
-      /**
-       * [수정됨] 100KB 미만 파일 필터링 기능 및 진단 로그 추가
-       */
-      async function getTorrentInfo(torrentId) {
-        try {
-            addLog(`ID ${torrentId}: 다운로드 링크를 조회합니다.`);
-            const info = await makeApiCall(`/torrents/info/${torrentId}`);
-
-            addLog(`진단: ${info.links.length}개의 링크와 ${info.files.length}개의 파일을 찾았습니다.`);
-
-            const MIN_FILE_SIZE = 100 * 1024; // 100 KB in bytes
-            
-            // 파일과 링크 정보를 합치고, 100KB 이상인 파일만 필터링합니다.
-            const filteredFiles = info.files
-                .map((file, index) => ({ ...file, link: info.links[index] }))
-                .filter(file => file.bytes >= MIN_FILE_SIZE);
-
-            const originalCount = info.files.length;
-            const filteredCount = filteredFiles.length;
-            if (originalCount > filteredCount) {
-                addLog(`진단: ${originalCount - filteredCount}개 파일(100KB 미만)을 목록에서 숨겼습니다.`);
-            }
-            
-            const fileListHTML = filteredFiles.map(file => {
-                return `<li class="p-2 my-1 border rounded flex justify-between items-center text-sm hover:bg-gray-50">
-                          <span class="flex-1 mr-4 break-all"><i class="fas fa-file-alt mr-2 text-gray-500"></i>${file.path} (${formatSize(file.bytes)})</span>
-                          <a href="${file.link}" target="_blank" class="px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded hover:bg-green-600 whitespace-nowrap"><i class="fas fa-download mr-1"></i>다운로드</a>
-                        </li>`;
-            }).join('');
-
-            const modalHTML = `<div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 fade-in" onclick="this.remove()"><div class="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col" onclick="event.stopPropagation()"><div class="flex justify-between items-center mb-4 border-b pb-3"><h3 class="text-lg font-semibold text-gray-800">다운로드 링크</h3><button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button></div><div class="overflow-y-auto"><p class="mb-2"><strong>파일명:</strong> ${info.filename}</p><p class="mb-4"><strong>총 크기:</strong> ${formatSize(info.bytes)}</p>${fileListHTML ? `<ul class="mt-2 space-y-2">${fileListHTML}</ul>` : "<p class='text-yellow-600'>다운로드 링크가 아직 생성되지 않았거나, 모든 파일이 100KB 미만입니다.</p>"}</div><button onclick="this.closest('.fixed').remove()" class="mt-4 px-4 py-2 bg-gray-600 text-white rounded self-end hover:bg-gray-700">닫기</button></div></div>`;
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-        } catch(error) { 
-            showToast("토렌트 정보 로드에 실패했습니다.", "error");
-            addLog(`토렌트 정보 로드 실패: ${error.message}`, 'error');
-        }
-      }
+      async function getTorrentInfo(torrentId) { try { addLog(`ID ${torrentId}: 다운로드 링크를 조회합니다.`); const info = await makeApiCall(`/torrents/info/${torrentId}`); addLog(`진단: ${info.links.length}개의 링크와 ${info.files.length}개의 파일을 찾았습니다.`); const MIN_FILE_SIZE = 100 * 1024; const filteredFiles = info.files .map((file, index) => ({ ...file, link: info.links[index] })) .filter(file => file.bytes >= MIN_FILE_SIZE); const originalCount = info.files.length; const filteredCount = filteredFiles.length; if (originalCount > filteredCount) { addLog(`진단: ${originalCount - filteredCount}개 파일(100KB 미만)을 목록에서 숨겼습니다.`); } const fileListHTML = filteredFiles.map(file => { return `<li class="p-2 my-1 border rounded flex justify-between items-center text-sm hover:bg-gray-50"> <span class="flex-1 mr-4 break-all"><i class="fas fa-file-alt mr-2 text-gray-500"></i>${file.path} (${formatSize(file.bytes)})</span> <a href="${file.link}" target="_blank" class="px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded hover:bg-green-600 whitespace-nowrap"><i class="fas fa-download mr-1"></i>다운로드</a> </li>`; }).join(''); const modalHTML = `<div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 fade-in" onclick="this.remove()"><div class="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col" onclick="event.stopPropagation()"><div class="flex justify-between items-center mb-4 border-b pb-3"><h3 class="text-lg font-semibold text-gray-800">다운로드 링크</h3><button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button></div><div class="overflow-y-auto"><p class="mb-2"><strong>파일명:</strong> ${info.filename}</p><p class="mb-4"><strong>총 크기:</strong> ${formatSize(info.bytes)}</p>${fileListHTML ? `<ul class="mt-2 space-y-2">${fileListHTML}</ul>` : "<p class='text-yellow-600'>다운로드 링크가 아직 생성되지 않았거나, 모든 파일이 100KB 미만입니다.</p>"}</div><button onclick="this.closest('.fixed').remove()" class="mt-4 px-4 py-2 bg-gray-600 text-white rounded self-end hover:bg-gray-700">닫기</button></div></div>`; document.body.insertAdjacentHTML('beforeend', modalHTML); } catch(error) { showToast("토렌트 정보 로드에 실패했습니다.", "error"); addLog(`토렌트 정보 로드 실패: ${error.message}`, 'error'); } }
       
       async function makeApiCall(t,e={}){const n=getToken();if(!n)throw new Error("API 토큰이 설정되지 않았습니다.");const o=`${API_BASE}${t}`,s={...e,headers:{Authorization:`Bearer ${n}`,...(e.headers||{})}};try{const i=await fetch(o,s);if(i.status===204)return null;const a=await i.json();if(!i.ok){const r=a&&a.error?`${a.error_code} - ${a.error}`:i.statusText;throw new Error(`API 오류: ${i.status} - ${r}`)}return a}catch(c){throw addLog(`API 호출 실패: ${c.message}`,"error"),c}}
       function getToken(){return localStorage.getItem("rdToken")}
       function saveToken(){ const token = document.getElementById("apiToken").value.trim(); if(token) { localStorage.setItem("rdToken", token); showToast("API 토큰이 저장되었습니다", "success"); testConnection(); } else { showToast("토큰을 입력해주세요", "warning"); } }
 
+      /**
+       * [수정됨] 만료 날짜가 항상 보이도록 수정
+       */
       async function testConnection() {
         const apiCombinedStatusEl = document.getElementById('apiCombinedStatus');
         apiCombinedStatusEl.innerHTML = `<span class="font-bold text-yellow-600">확인 중...</span>`;
@@ -174,12 +139,31 @@
                 const expirationDate = new Date(user.expiration);
                 const now = new Date();
                 const diffDays = Math.ceil((expirationDate - now) / (1000 * 60 * 60 * 24));
+                
+                // 날짜를 'YYYY. MM. DD.' 형식으로 포맷
+                const formattedExpiration = expirationDate.toLocaleString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+
                 let dDayText = `D-${diffDays}`;
                 let colorClass = 'text-green-600';
-                if (diffDays <= 0) { dDayText = '만료'; colorClass = 'text-red-600'; } 
-                else if (diffDays <= 7) { colorClass = 'text-yellow-600'; showToast(`프리미엄 만료일이 ${diffDays}일 남았습니다.`, 'warning'); }
-                apiCombinedStatusEl.innerHTML = `<span class="font-bold ${colorClass}" title="만료일: ${expirationDate.toLocaleString()}">${dDayText}</span>, <span class="font-bold text-blue-600">${user.points}P</span>`;
-            } else { apiCombinedStatusEl.innerHTML = `<span class="font-bold text-red-600">프리미엄 아님</span>`; }
+
+                if (diffDays <= 0) { 
+                    dDayText = '만료'; 
+                    colorClass = 'text-red-600'; 
+                } else if (diffDays <= 7) { 
+                    colorClass = 'text-yellow-600'; 
+                    showToast(`프리미엄 만료일이 ${diffDays}일 남았습니다.`, 'warning'); 
+                }
+                
+                // 날짜와 D-Day를 함께 표시
+                apiCombinedStatusEl.innerHTML = `<span class="font-bold ${colorClass}">${formattedExpiration} (${dDayText})</span>, <span class="font-bold text-blue-600">${user.points}P</span>`;
+
+            } else { 
+                apiCombinedStatusEl.innerHTML = `<span class="font-bold text-red-600">프리미엄 아님</span>`; 
+            }
         } catch (e) {
             showToast(`연결 실패: ${e.message}`, "error");
             apiCombinedStatusEl.innerHTML = `<span class="font-bold text-red-600" title="${e.message}">연결 실패</span>`;
@@ -216,5 +200,4 @@
       document.addEventListener("DOMContentLoaded", initializeApp);
     </script>
 </body>
-
-</html>```
+</html>
