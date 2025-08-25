@@ -33,9 +33,9 @@
       <!-- Input Section -->
       <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
         <div class="flex flex-col md:flex-row gap-6">
-            <!-- [수정됨] 높이 통일을 위해 부모에 flex 추가 및 자식에 h-full 추가 -->
             <div class="flex-1 flex">
-                <textarea id="magnetInput" rows="5" class="w-full h-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                <!-- [수정됨] 누락된 placeholder 속성 추가 -->
+                <textarea id="magnetInput" rows="5" class="w-full h-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="magnet:?xt=...를 한 줄에 하나씩 입력..."></textarea>
             </div>
             <div class="flex-1 flex">
                 <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center w-full h-full flex flex-col justify-center items-center" id="dropZone">
@@ -54,8 +54,7 @@
             </label>
           </div>
           <div class="relative">
-            <textarea id="trackerInput" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 pr-40"></textarea>
-            <!-- [수정됨] 버튼 위치를 상단으로 변경 -->
+            <textarea id="trackerInput" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 pr-40" placeholder="최신 통합 트래커 목록을 자동으로 불러오는 중입니다..."></textarea>
             <button onclick="fetchBestTrackers(this)" id="fetchTrackerButton" class="absolute top-2.5 right-2.5 px-3 py-1 bg-purple-600 text-white text-xs font-semibold rounded hover:bg-purple-700 flex items-center transition-colors"><i class="fas fa-sync-alt mr-2"></i><span>최신으로 업데이트</span><i class="fas fa-spinner loading ml-2 hidden"></i></button>
           </div>
         </div>
@@ -126,9 +125,6 @@
       function getToken(){return localStorage.getItem("rdToken")}
       function saveToken(){ const token = document.getElementById("apiToken").value.trim(); if(token) { localStorage.setItem("rdToken", token); showToast("API 토큰이 저장되었습니다", "success"); testConnection(); } else { showToast("토큰을 입력해주세요", "warning"); } }
 
-      /**
-       * [수정됨] 날짜 포맷 변경 및 D-Day 강조
-       */
       async function testConnection() {
         const apiCombinedStatusEl = document.getElementById('apiCombinedStatus');
         apiCombinedStatusEl.innerHTML = `<span class="font-bold text-yellow-600">확인 중...</span>`;
@@ -142,7 +138,6 @@
                 const now = new Date();
                 const diffDays = Math.ceil((expirationDate - now) / (1000 * 60 * 60 * 24));
                 
-                // [수정] 날짜를 'YYYY. MM. DD. HH:mm' 형식으로 포맷
                 const formattedExpiration = expirationDate.toLocaleString('ko-KR', {
                     year: 'numeric',
                     month: '2-digit',
@@ -163,7 +158,6 @@
                     showToast(`프리미엄 만료일이 ${diffDays}일 남았습니다.`, 'warning'); 
                 }
                 
-                // [수정] D-Day 부분을 font-black으로 더 진하게 처리
                 apiCombinedStatusEl.innerHTML = `<span class="font-semibold ${colorClass}">${formattedExpiration} (<span class="font-black">${dDayText}</span>)</span>, <span class="font-bold text-blue-600">${user.points}P</span>`;
 
             } else { 
