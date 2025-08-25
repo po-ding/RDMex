@@ -33,10 +33,10 @@
       <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
         <div class="flex flex-col md:flex-row gap-6">
             <div class="flex-1 flex relative h-32 md:h-auto">
-                <!-- [수정됨] 아이콘과 텍스트가 중앙에 겹치도록 구조 수정 -->
+                <!-- [수정됨] 아이콘과 텍스트 레이아웃을 토렌트 창과 동일하게 수정 -->
                 <div id="magnetPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-opacity duration-300">
-                    <p class="text-gray-500">magnet</p>
-                    <i class="fas fa-magnet text-4xl text-gray-400 mt-2"></i>
+                    <p class="absolute top-4 left-0 right-0 text-gray-500 text-center">magnet</p>
+                    <i class="fas fa-magnet text-4xl text-gray-400 mt-6"></i>
                 </div>
                 <textarea id="magnetInput" rows="2" class="w-full h-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-left bg-transparent z-10 md:min-h-[128px]"></textarea>
             </div>
@@ -220,7 +220,7 @@
       function addLog(message, type = "info") { const logEl = document.getElementById("statusLog"); const time = new Date().toLocaleTimeString(); const iconClass = type === "error" ? "fa-times-circle text-red-500" : type === "success" ? "fa-check-circle text-green-500" : type === "warning" ? "fa-exclamation-triangle text-yellow-500" : "fa-info-circle text-blue-500"; const initialMsg = document.getElementById("initialLogMessage"); if (initialMsg) initialMsg.remove(); const entry = document.createElement("div"); entry.className = `mb-2 p-2 border-l-4 ${type === "error" ? "border-red-400 bg-red-50" : type === "success" ? "border-green-400 bg-green-50" : type === "warning" ? "border-yellow-400 bg-yellow-50" : "border-blue-400 bg-blue-50"}`; entry.innerHTML = `<span class="text-xs text-gray-500">[${time}]</span> <i class="fas ${iconClass} ml-2 mr-2"></i> <span>${message}</span>`; logEl.appendChild(entry); logEl.scrollTop = logEl.scrollHeight; }
       function showToast(message, type = "info") { const container = document.getElementById("toastContainer"); const toast = document.createElement("div"); const iconClass = type === "success" ? "fa-check-circle" : type === "error" ? "fa-exclamation-circle" : type === "warning" ? "fa-exclamation-triangle" : "fa-info-circle"; const bgColor = type === "success" ? "bg-green-500" : type === "error" ? "bg-red-500" : type === "warning" ? "bg-yellow-500" : "bg-blue-500"; toast.className = `fade-in px-6 py-4 rounded-lg text-white mb-4 shadow-lg ${bgColor}`; toast.innerHTML = `<div class="flex items-center"><i class="fas ${iconClass} mr-3"></i><span class="font-semibold">${message}</span></div>`; container.appendChild(toast); setTimeout(() => { toast.style.opacity = "0"; setTimeout(() => toast.remove(), 300); }, 5000); }
       
-      // [수정됨] 스피너 아이콘이 없으므로 로직 간소화
+      // [수정됨] 스피너 아이콘이 없으므로 로딩 처리 로직 간소화
       function setLoading(button, isLoading) {
         if (!button) return;
         if (isLoading) {
