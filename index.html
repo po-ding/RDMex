@@ -11,7 +11,6 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
     <style>
-      .loading { /* animation: spin 1s linear infinite; */ }
       .fade-in { animation: fadeIn 0.3s ease-in; }
       @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
       .toast { position: fixed; top: 20px; right: 20px; z-index: 1000; }
@@ -33,7 +32,7 @@
       <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
         <div class="flex flex-col md:flex-row gap-6">
             <div class="flex-1 flex relative h-32 md:h-auto">
-                <!-- [수정됨] 아이콘과 텍스트 레이아웃을 토렌트 창과 동일하게 수정 -->
+                <!-- [수정됨] 아이콘/텍스트 레이아웃을 토렌트 창과 동일하게 수정 -->
                 <div id="magnetPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-opacity duration-300">
                     <p class="absolute top-4 left-0 right-0 text-gray-500 text-center">magnet</p>
                     <i class="fas fa-magnet text-4xl text-gray-400 mt-6"></i>
