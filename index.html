@@ -110,7 +110,6 @@
     <div id="toastContainer" class="toast"></div>
     <script src="cordova.js"></script>
     <script>
-        // JavaScript 로직은 변경되지 않았습니다.
         const API_BASE = "https://api.real-debrid.com/rest/1.0";
         let refreshTimer = null;
         let fastRefreshCount = 0;
@@ -163,12 +162,34 @@
         
         /**
          * [수정된 함수]
-         * '다운로드 링크 보기' 버튼 클릭 시, Real-Debrid의 토렌트 페이지를 새 탭으로 엽니다.
-         * 이렇게 하면 API를 통해 링크를 가져오는 대신 웹사이트에서 직접 다운로드할 수 있습니다.
+         * '다운로드 링크 보기' 버튼 클릭 시, Real-Debrid의 /downloader 페이지로 바로 이동합니다.
+         * 이를 위해 먼저 /torrents/info API를 호출하여 해당 토렌트의 실제 다운로드 링크들을 가져옵니다.
          */
         async function getTorrentInfo(torrentId) {
-            addLog(`ID ${torrentId}: Real-Debrid 토렌트 페이지를 새 탭에서 엽니다.`);
-            window.open('https://real-debrid.com/torrents', '_blank');
+            try {
+                addLog(`ID ${torrentId}: 다운로드 링크 정보를 조회합니다.`);
+                const info = await makeApiCall(`/torrents/info/${torrentId}`);
+
+                if (info && info.links && info.links.length > 0) {
+                    // 모든 링크를 줄바꿈(\n)으로 연결합니다.
+                    const linksString = info.links.join('\n');
+                    // 전체 링크 문자열을 URL 인코딩합니다.
+                    const encodedLinks = encodeURIComponent(linksString);
+                    // /downloader 페이지로 전달할 최종 URL을 생성합니다.
+                    const downloaderUrl = `https://real-debrid.com/downloader?links=${encodedLinks}`;
+
+                    addLog(`ID ${torrentId}: 다운로더 페이지로 이동합니다.`);
+                    // 새 탭에서 다운로더 페이지를 엽니다.
+                    window.open(downloaderUrl, '_blank');
+                } else {
+                    // 토렌트 다운로드는 완료되었으나, 아직 RD 서버에서 링크 생성이 안된 경우
+                    showToast("다운로드 링크가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.", "warning");
+                    addLog(`ID ${torrentId}: 다운로드 링크를 찾을 수 없습니다.`, "warning");
+                }
+            } catch (error) {
+                showToast("다운로드 정보 조회에 실패했습니다.", "error");
+                addLog(`다운로드 정보 조회 실패 (ID: ${torrentId}): ${error.message}`, 'error');
+            }
         }
         
         async function makeApiCall(t,e={}){const n=getToken();if(!n)throw new Error("API 토큰이 설정되지 않았습니다.");const o=`${API_BASE}${t}`,s={...e,headers:{Authorization:`Bearer ${n}`,...(e.headers||{})}};try{const i=await fetch(o,s);if(i.status===204)return null;const a=await i.json();if(!i.ok){const r=a&&a.error?`${a.error_code} - ${a.error}`:i.statusText;throw new Error(`API 오류: ${i.status} - ${r}`)}return a}catch(c){throw addLog(`API 호출 실패: ${c.message}`,"error"),c}}
