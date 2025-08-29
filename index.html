@@ -156,63 +156,23 @@
         async function selectFiles(id) { try { addLog(`ID ${id}: 모든 파일을 선택합니다.`); await makeApiCall(`/torrents/selectFiles/${id}`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "files=all" }); showToast("모든 파일이 선택되어 다운로드가 시작됩니다.", "success"); await refreshTorrents(); } catch (e) { showToast("파일 선택 실패: " + e.message, "error"); } }
         
         /**
-         * [최종 수정된 함수]
-         * API로 파일/링크 데이터를 직접 가져와 자체적으로 팝업(모달)을 생성하고 내용을 채웁니다.
-         * '완료 직후의 타이밍 문제'와 '시간 경과 후의 링크 만료 문제'를 모두 처리할 수 있도록
-         * 데이터 유효성을 철저히 검사하여 안정성을 극대화했습니다.
+         * [최종 안정화 버전]
+         * '다운로드 링크 보기' 클릭 시, Real-Debrid의 공식 /downloader 페이지를 새 탭으로 엽니다.
+         * 이 방식은 RD의 'private link' 보안 정책을 준수하는 유일하고 가장 확실한 방법입니다.
          */
         async function getTorrentInfo(torrentId) {
             try {
-                addLog(`ID ${torrentId}: 다운로드 링크 목록을 API를 통해 조회합니다.`);
+                addLog(`ID ${torrentId}: 다운로드 링크 정보를 조회합니다.`);
                 const info = await makeApiCall(`/torrents/info/${torrentId}`);
 
-                // [핵심] 링크 데이터가 유효한지 철저하게 확인합니다.
-                if (info && info.links && info.links.length > 0 && info.files) {
-                    
-                    const filesWithLinks = info.files.map((file, index) => ({
-                        ...file,
-                        link: info.links[index] 
-                    }));
+                if (info && info.links && info.links.length > 0) {
+                    const linksString = info.links.join('\n');
+                    const encodedLinks = encodeURIComponent(linksString);
+                    const downloaderUrl = `https://real-debrid.com/downloader?links=${encodedLinks}`;
 
-                    const fileListHTML = filesWithLinks.map(file => {
-                        return `
-                            <li class="p-2 my-1 border border-gray-200 rounded-md flex justify-between items-center text-sm hover:bg-gray-50 transition-colors">
-                                <span class="flex-1 mr-4 break-all text-gray-800">
-                                    <i class="fas fa-file-alt mr-2 text-gray-500"></i>
-                                    ${file.path} <span class="text-gray-500">(${formatSize(file.bytes)})</span>
-                                </span>
-                                <a href="${file.link}" target="_blank" class="px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 whitespace-nowrap">
-                                    <i class="fas fa-download mr-1"></i>다운로드
-                                </a>
-                            </li>
-                        `;
-                    }).join('');
-
-                    const modalHTML = `
-                        <div id="nativeDownloaderModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 fade-in" onclick="this.remove()">
-                            <div class="bg-white rounded-lg shadow-2xl p-6 max-w-4xl w-full max-h-[90vh] flex flex-col" onclick="event.stopPropagation()">
-                                <div class="flex justify-between items-center mb-4 border-b border-gray-200 pb-3">
-                                    <h3 class="text-xl font-semibold text-gray-800 flex-shrink-1 mr-4 overflow-hidden text-ellipsis whitespace-nowrap" title="${info.filename}">${info.filename}</h3>
-                                    <button onclick="document.getElementById('nativeDownloaderModal').remove()" class="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
-                                </div>
-                                <div class="overflow-y-auto flex-grow pr-2">
-                                    <ul class="space-y-1">${fileListHTML}</ul>
-                                </div>
-                                <div class="mt-4 pt-4 border-t border-gray-200 flex justify-end gap-3">
-                                     <button onclick="navigator.clipboard.writeText('${info.links.join('\\n')}'); showToast('모든 링크가 클립보드에 복사되었습니다.', 'success');" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-                                        <i class="fas fa-copy mr-2"></i>모든 링크 복사
-                                    </button>
-                                    <button onclick="document.getElementById('nativeDownloaderModal').remove()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">닫기</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    
-                    document.body.insertAdjacentHTML('beforeend', modalHTML);
-                    addLog(`ID ${torrentId}: 자체 다운로더 팝업을 성공적으로 표시했습니다.`);
-
+                    addLog(`ID ${torrentId}: 새 탭에서 공식 다운로더 페이지를 엽니다.`);
+                    window.open(downloaderUrl, '_blank');
                 } else {
-                    // [안전장치] 링크가 없거나 만료된 경우, 사용자에게 명확히 알려줍니다.
                     showToast("다운로드 링크가 만료되었거나 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.", "warning");
                     addLog(`ID ${torrentId}: 다운로드 링크를 찾을 수 없습니다. (만료 또는 생성 중)`, "warning");
                 }
