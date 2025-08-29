@@ -157,68 +157,88 @@
         
         /**
          * [최종 완성 버전]
-         * 모든 예외 상황(API 호출 실패, 비정상 응답)을 처리하는 최종 코드입니다.
-         * 성공/실패 여부를 판별하는 로직을 가장 단순하고 확실한 'download' 속성 존재 여부로 변경하여 안정성을 극대화했습니다.
+         * 저용량 파일 필터링 기능이 추가된 최종 코드입니다.
+         * 1GB 미만의 파일은 API 호출 전에 미리 제외하여 속도와 효율성을 높였습니다.
          */
         async function getTorrentInfo(torrentId, button) {
+            // 이 값을 수정하여 필터링할 최소 파일 크기를 조절할 수 있습니다. (단위: Bytes)
+            const MIN_FILE_SIZE_BYTES = 1024 * 1024 * 1024; // 1 GB
+
             setLoading(button, true);
-            showToast("다운로드 링크를 생성 중입니다...", "info");
+            showToast("다운로드 링크를 순차적으로 생성 중입니다...", "info");
             try {
                 addLog(`ID ${torrentId}: 1단계 - 파일 정보 및 비공개 링크를 조회합니다.`);
                 const info = await makeApiCall(`/torrents/info/${torrentId}`);
 
                 if (info && info.links && info.links.length > 0 && info.files) {
-                    addLog(`ID ${torrentId}: 2단계 - ${info.links.length}개의 비공개 링크를 진짜 다운로드 링크로 변환합니다...`);
                     
-                    // 각 API 호출이 실패하더라도 전체가 멈추지 않도록 개별적으로 에러를 잡습니다.
-                    const unrestrictPromises = info.links.map(privateLink => 
-                        makeApiCall('/unrestrict/link', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: `link=${encodeURIComponent(privateLink)}`
-                        }).catch(err => ({ error: err.message })) // 실패 시 에러 객체를 반환
-                    );
+                    // 파일 정보와 비공개 링크 정보를 먼저 합칩니다.
+                    const originalFiles = info.files.map((file, index) => ({
+                        ...file,
+                        privateLink: info.links[index]
+                    }));
 
-                    const results = await Promise.all(unrestrictPromises);
+                    // [핵심 기능] 저용량 파일을 미리 필터링합니다.
+                    const filesToProcess = originalFiles.filter(file => file.bytes >= MIN_FILE_SIZE_BYTES);
+                    const hiddenFilesCount = originalFiles.length - filesToProcess.length;
 
+                    if (filesToProcess.length === 0) {
+                        throw new Error(`모든 파일이 ${formatSize(MIN_FILE_SIZE_BYTES)} 미만이라 처리할 파일이 없습니다.`);
+                    }
+
+                    addLog(`ID ${torrentId}: 2단계 - ${filesToProcess.length}개의 유효한 파일을 순차적으로 변환합니다... (${hiddenFilesCount}개 숨김)`);
+                    
                     const filesWithRealLinks = [];
                     let successfulLinksCount = 0;
 
-                    info.files.forEach((file, index) => {
-                        const result = results[index];
-                        // [최종 강화] 오직 'download' 속성의 존재 여부만으로 성공을 판별합니다.
-                        if (result && result.download) {
-                            filesWithRealLinks.push({ ...file, link: result.download });
-                            successfulLinksCount++;
-                        } else {
-                            const reason = result && result.error ? result.error : '유효하지 않은 응답';
-                            addLog(`'${file.path}' 링크 변환 실패: ${reason}`, 'warning');
+                    for (const file of filesToProcess) {
+                        try {
+                            const result = await makeApiCall('/unrestrict/link', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                                body: `link=${encodeURIComponent(file.privateLink)}`
+                            });
+
+                            if (result && result.download) {
+                                filesWithRealLinks.push({ ...file, link: result.download });
+                                successfulLinksCount++;
+                            } else {
+                                throw new Error('유효하지 않은 응답');
+                            }
+                        } catch (err) {
+                            addLog(`'${file.path}' 링크 변환 실패: ${err.message}`, 'warning');
                             filesWithRealLinks.push({ ...file, link: null });
                         }
-                    });
+                    }
 
                     if (successfulLinksCount === 0) {
-                        throw new Error("모든 파일의 링크를 생성하지 못했습니다. 링크가 만료되었거나 일시적인 서버 오류일 수 있습니다.");
+                        throw new Error("모든 유효 파일의 링크를 생성하지 못했습니다. 링크가 만료되었거나 일시적인 서버 오류일 수 있습니다.");
                     }
 
                     const realDownloadLinks = filesWithRealLinks.filter(f => f.link).map(f => f.link);
 
-                    const fileListHTML = filesWithRealLinks.map(file => {
+                    const fileListHTML = filesWithRealLinks.map((file, index) => {
+                        const liClass = file.link ? "" : "failed-item";
                         if (file.link) {
                             return `
-                                <li class="p-2 my-1 border border-gray-200 rounded-md flex justify-between items-center text-sm hover:bg-gray-50 transition-colors">
-                                    <span class="flex-1 mr-4 break-all text-gray-800">
+                                <li class="p-2 my-1 border border-gray-200 rounded-md flex justify-between items-center text-sm hover:bg-gray-50 transition-colors ${liClass}">
+                                    <span class="flex-1 mr-2 break-all text-gray-800">
                                         <i class="fas fa-file-alt mr-2 text-gray-500"></i>
                                         ${file.path} <span class="text-gray-500">(${formatSize(file.bytes)})</span>
                                     </span>
-                                    <a href="${file.link}" target="_blank" class="px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 whitespace-nowrap">
-                                        <i class="fas fa-download mr-1"></i>다운로드
-                                    </a>
+                                    <div class="flex-shrink-0 flex items-center gap-2">
+                                        <button onclick="navigator.clipboard.writeText('${file.link}'); showToast('링크가 복사되었습니다.', 'success');" class="px-2 py-1 text-gray-600 hover:text-blue-600" title="링크 복사">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <a href="${file.link}" target="_blank" class="px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 whitespace-nowrap">
+                                            <i class="fas fa-download mr-1"></i>다운로드
+                                        </a>
+                                    </div>
                                 </li>
                             `;
                         } else {
                             return `
-                                <li class="p-2 my-1 border border-gray-200 rounded-md flex justify-between items-center text-sm bg-red-50">
+                                <li class="p-2 my-1 border border-gray-200 rounded-md flex justify-between items-center text-sm bg-red-50 ${liClass}">
                                     <span class="flex-1 mr-4 break-all text-red-700">
                                         <i class="fas fa-times-circle mr-2 text-red-500"></i>
                                         ${file.path} <span class="text-red-500">(${formatSize(file.bytes)})</span>
@@ -238,22 +258,27 @@
                                     <h3 class="text-xl font-semibold text-gray-800 flex-shrink-1 mr-4 overflow-hidden text-ellipsis whitespace-nowrap" title="${info.filename}">${info.filename}</h3>
                                     <button onclick="document.getElementById('nativeDownloaderModal').remove()" class="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
                                 </div>
-                                <div class="overflow-y-auto flex-grow pr-2">
-                                    ${successfulLinksCount < info.files.length ? `<p class="text-sm text-yellow-800 mb-2 p-2 bg-yellow-100 rounded-md">일부 파일의 링크 생성에 실패했습니다.</p>` : ''}
+                                <div id="file-list-container" class="overflow-y-auto flex-grow pr-2">
+                                    ${hiddenFilesCount > 0 ? `<p class="text-sm text-gray-600 mb-3 p-2 bg-gray-100 rounded-md text-center"><i class="fas fa-info-circle mr-2 text-gray-500"></i>${hiddenFilesCount}개의 저용량 파일(${formatSize(MIN_FILE_SIZE_BYTES)} 미만)이 목록에서 자동으로 제외되었습니다.</p>` : ''}
                                     <ul class="space-y-1">${fileListHTML}</ul>
                                 </div>
-                                <div class="mt-4 pt-4 border-t border-gray-200 flex justify-end gap-3">
-                                     <button ${realDownloadLinks.length === 0 ? 'disabled' : ''} onclick="navigator.clipboard.writeText('${realDownloadLinks.join('\\n')}'); showToast('성공한 링크가 클립보드에 복사되었습니다.', 'success');" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        <i class="fas fa-copy mr-2"></i>성공 링크 복사
+                                <div class="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center gap-3">
+                                     <button onclick="window.open('https://real-debrid.com/downloads', '_blank')" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                        <i class="fas fa-external-link-alt mr-2"></i>RD 페이지
                                     </button>
-                                    <button onclick="document.getElementById('nativeDownloaderModal').remove()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">닫기</button>
+                                    <div class="flex gap-3">
+                                        <button ${realDownloadLinks.length === 0 ? 'disabled' : ''} onclick="navigator.clipboard.writeText('${realDownloadLinks.join('\\n')}'); showToast('성공한 링크가 클립보드에 복사되었습니다.', 'success');" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <i class="fas fa-copy mr-2"></i>모두 복사
+                                        </button>
+                                        <button onclick="document.getElementById('nativeDownloaderModal').remove()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">닫기</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     `;
                     
                     document.body.insertAdjacentHTML('beforeend', modalHTML);
-                    addLog(`ID ${torrentId}: 3단계 - 자체 다운로더 팝업을 표시했습니다. (성공: ${successfulLinksCount}/${info.files.length})`);
+                    addLog(`ID ${torrentId}: 3단계 - 다운로더 팝업을 표시했습니다. (성공: ${successfulLinksCount}/${filesToProcess.length})`);
                     showToast("링크 생성 완료!", "success");
 
                 } else {
@@ -267,7 +292,7 @@
                 setLoading(button, false);
             }
         }
-        
+
         async function makeApiCall(t,e={}){const n=getToken();if(!n)throw new Error("API 토큰이 설정되지 않았습니다.");const o=`${API_BASE}${t}`,s={...e,headers:{Authorization:`Bearer ${n}`,...(e.headers||{})}};try{const i=await fetch(o,s);if(i.status===204)return null;const a=await i.json();if(!i.ok){const r=a&&a.error?`${a.error_code} - ${a.error}`:i.statusText;throw new Error(`API 오류: ${i.status} - ${r}`)}return a}catch(c){throw addLog(`API 호출 실패: ${c.message}`,"error"),c}}
         function getToken(){return localStorage.getItem("rdToken")}
         function saveToken(){ const token = document.getElementById("apiToken").value.trim(); if(token) { localStorage.setItem("rdToken", token); showToast("API 토큰이 저장되었습니다", "success"); testConnection(); } else { showToast("토큰을 입력해주세요", "warning"); } }
