@@ -6,7 +6,7 @@
     <title>RDMex</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: real-debrid.com; connect-src 'self' https://api.real-debrid.com https://raw.githubusercontent.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-src 'self' https://real-debrid.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap:; connect-src 'self' https://api.real-debrid.com https://raw.githubusercontent.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
 
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
@@ -16,7 +16,6 @@
       .toast { position: fixed; top: 20px; right: 20px; z-index: 1000; }
     </style>
 </head>
-<!-- [수정됨] 배경을 흰색으로 변경 -->
 <body class="bg-white min-h-screen">
     <!-- Header -->
     <div class="bg-gradient-to-r from-blue-600 to-purple-800 text-white p-4 shadow-md flex justify-between items-center">
@@ -29,7 +28,7 @@
     </div>
 
     <div class="container mx-auto px-4 md:px-6 py-8 max-w-7xl">
-      <!-- [수정됨] 카드를 밝은 회색으로 변경 -->
+      <!-- Cards -->
       <div class="bg-gray-100 rounded-lg shadow-lg p-6 mb-8">
         <div class="flex flex-col md:flex-row gap-6">
             <div class="flex-1 flex relative h-32 md:h-auto">
@@ -68,7 +67,6 @@
         </div>
       </div>
 
-      <!-- [수정됨] 카드를 밝은 회색으로 변경 -->
       <div class="bg-gray-100 rounded-lg shadow-lg mb-8 relative" style="height: 600px">
         <div class="absolute top-0 left-0 right-0 p-6 h-20 border-b border-gray-200"><h2 class="text-xl font-semibold flex items-center justify-center text-gray-800 h-full"><i class="fas fa-list mr-2 text-blue-500"></i>토렌트 목록</h2></div>
         <div class="absolute top-20 bottom-20 left-0 right-0 overflow-y-auto p-4"><div id="torrentList" class="space-y-3"><p class="text-gray-500 text-center py-8">토렌트 목록을 불러오려면 새로고침 버튼을 클릭하세요.</p></div></div>
@@ -80,14 +78,11 @@
         </div>
       </div>
       
-      <!-- [수정됨] 카드를 밝은 회색으로 변경 -->
       <div class="bg-gray-100 rounded-lg shadow-lg p-6">
         <h2 class="text-xl font-semibold mb-4 flex items-center text-gray-800"><i class="fas fa-info-circle mr-2 text-blue-500"></i>상태 및 로그</h2>
-        <!-- [수정됨] 로그 배경을 흰색으로 변경 -->
         <div id="statusLog" class="bg-white rounded-lg p-4 max-h-60 overflow-y-auto"><p id="initialLogMessage" class="text-gray-500">준비 완료.</p></div>
       </div>
       
-      <!-- [수정됨] 카드를 밝은 회색으로 변경 -->
       <div class="bg-gray-100 rounded-lg shadow-lg p-6 mt-8">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold flex items-center text-gray-800">
@@ -161,13 +156,13 @@
         async function selectFiles(id) { try { addLog(`ID ${id}: 모든 파일을 선택합니다.`); await makeApiCall(`/torrents/selectFiles/${id}`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "files=all" }); showToast("모든 파일이 선택되어 다운로드가 시작됩니다.", "success"); await refreshTorrents(); } catch (e) { showToast("파일 선택 실패: " + e.message, "error"); } }
         
         /**
-         * [수정된 함수]
-         * '다운로드 링크 보기' 클릭 시, 페이지 이동 없이 팝업(모달) 창을 띄웁니다.
-         * 모달 창 내부에는 iframe을 사용하여 Real-Debrid 다운로더 페이지를 직접 보여줍니다.
+         * [수정된 최종 함수]
+         * '다운로드 링크 보기' 클릭 시, Real-Debrid의 /downloader 페이지를 새 탭으로 엽니다.
+         * 이 방식은 보안 정책에 의해 차단되지 않는 가장 안정적인 방법입니다.
          */
         async function getTorrentInfo(torrentId) {
             try {
-                addLog(`ID ${torrentId}: 다운로드 링크 정보를 조회하여 팝업을 준비합니다.`);
+                addLog(`ID ${torrentId}: 다운로드 링크 정보를 조회합니다.`);
                 const info = await makeApiCall(`/torrents/info/${torrentId}`);
 
                 if (info && info.links && info.links.length > 0) {
@@ -175,25 +170,8 @@
                     const encodedLinks = encodeURIComponent(linksString);
                     const downloaderUrl = `https://real-debrid.com/downloader?links=${encodedLinks}`;
 
-                    const modalHTML = `
-                        <div id="downloaderModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 fade-in">
-                            <div class="bg-white rounded-lg shadow-2xl max-w-4xl w-full h-full max-h-[90vh] flex flex-col" onclick="event.stopPropagation()">
-                                <div class="flex justify-between items-center p-4 border-b border-gray-200">
-                                    <h3 class="text-lg font-semibold text-gray-800">다운로드</h3>
-                                    <button onclick="document.getElementById('downloaderModal').remove()" class="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
-                                </div>
-                                <div class="flex-grow p-1">
-                                    <iframe src="${downloaderUrl}" class="w-full h-full border-0"></iframe>
-                                </div>
-                                <div class="p-3 border-t border-gray-200 text-right">
-                                    <button onclick="document.getElementById('downloaderModal').remove()" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">닫기</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    document.body.insertAdjacentHTML('beforeend', modalHTML);
-                    addLog(`ID ${torrentId}: 다운로더 팝업을 표시했습니다.`);
-
+                    addLog(`ID ${torrentId}: 새 탭에서 다운로더 페이지를 엽니다.`);
+                    window.open(downloaderUrl, '_blank');
                 } else {
                     showToast("다운로드 링크가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.", "warning");
                     addLog(`ID ${torrentId}: 다운로드 링크를 찾을 수 없습니다.`, "warning");
