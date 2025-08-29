@@ -156,12 +156,10 @@
         async function selectFiles(id) { try { addLog(`ID ${id}: 모든 파일을 선택합니다.`); await makeApiCall(`/torrents/selectFiles/${id}`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "files=all" }); showToast("모든 파일이 선택되어 다운로드가 시작됩니다.", "success"); await refreshTorrents(); } catch (e) { showToast("파일 선택 실패: " + e.message, "error"); } }
         
         /**
-         * [최종 완성 버전]
-         * DMM의 작동 방식을 분석하여 알아낸 /unrestrict/link API를 사용하는 최종 솔루션입니다.
-         * 1. /torrents/info로 파일 정보와 '비공개' 링크 목록을 가져옵니다.
-         * 2. 각 '비공개' 링크를 /unrestrict/link API로 호출하여 '진짜 공개' 다운로드 링크로 변환합니다.
-         * 3. 변환된 링크들을 자체 제작한 팝업(모달)에 표시합니다.
-         * 이 방식은 Real-Debrid의 모든 보안 정책을 준수하며 완벽하게 작동합니다.
+         * [최종 안정화 버전]
+         * 예외 상황(API 응답에 download 속성이 없는 경우)을 완벽하게 처리하는 최종 코드입니다.
+         * Promise.allSettled를 사용하여 일부 링크 변환이 실패하더라도 전체 기능이 멈추지 않고,
+         * 성공한 링크만 목록에 표시하거나 실패 상태를 명확하게 알려줍니다.
          */
         async function getTorrentInfo(torrentId, button) {
             setLoading(button, true);
@@ -173,7 +171,6 @@
                 if (info && info.links && info.links.length > 0 && info.files) {
                     addLog(`ID ${torrentId}: 2단계 - ${info.links.length}개의 비공개 링크를 진짜 다운로드 링크로 변환합니다...`);
                     
-                    // Promise.all을 사용하여 모든 링크를 동시에, 병렬로 변환 요청합니다. (속도 향상)
                     const unrestrictPromises = info.links.map(privateLink => 
                         makeApiCall('/unrestrict/link', {
                             method: 'POST',
@@ -181,29 +178,56 @@
                             body: `link=${encodeURIComponent(privateLink)}`
                         })
                     );
-                    const unrestrictedLinks = await Promise.all(unrestrictPromises);
 
-                    // 파일 정보와 변환된 '진짜' 링크 정보를 합칩니다.
-                    const filesWithRealLinks = info.files.map((file, index) => ({
-                        ...file,
-                        // unrestrict API 응답 객체의 'download' 속성에 진짜 링크가 들어있습니다.
-                        link: unrestrictedLinks[index].download 
-                    }));
+                    const results = await Promise.allSettled(unrestrictPromises);
 
-                    const realDownloadLinks = filesWithRealLinks.map(f => f.link);
+                    const filesWithRealLinks = [];
+                    let successfulLinksCount = 0;
+
+                    info.files.forEach((file, index) => {
+                        const result = results[index];
+                        if (result.status === 'fulfilled' && result.value && result.value.download) {
+                            filesWithRealLinks.push({ ...file, link: result.value.download });
+                            successfulLinksCount++;
+                        } else {
+                            const reason = result.reason ? result.reason.message : '유효하지 않은 응답';
+                            addLog(`'${file.path}' 링크 변환 실패: ${reason}`, 'warning');
+                            filesWithRealLinks.push({ ...file, link: null });
+                        }
+                    });
+
+                    if (successfulLinksCount === 0) {
+                        throw new Error("모든 파일의 링크를 생성하지 못했습니다. 링크가 만료되었거나 일시적인 서버 오류일 수 있습니다.");
+                    }
+
+                    const realDownloadLinks = filesWithRealLinks.filter(f => f.link).map(f => f.link);
 
                     const fileListHTML = filesWithRealLinks.map(file => {
-                        return `
-                            <li class="p-2 my-1 border border-gray-200 rounded-md flex justify-between items-center text-sm hover:bg-gray-50 transition-colors">
-                                <span class="flex-1 mr-4 break-all text-gray-800">
-                                    <i class="fas fa-file-alt mr-2 text-gray-500"></i>
-                                    ${file.path} <span class="text-gray-500">(${formatSize(file.bytes)})</span>
-                                </span>
-                                <a href="${file.link}" target="_blank" class="px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 whitespace-nowrap">
-                                    <i class="fas fa-download mr-1"></i>다운로드
-                                </a>
-                            </li>
-                        `;
+                        if (file.link) {
+                            return `
+                                <li class="p-2 my-1 border border-gray-200 rounded-md flex justify-between items-center text-sm hover:bg-gray-50 transition-colors">
+                                    <span class="flex-1 mr-4 break-all text-gray-800">
+                                        <i class="fas fa-file-alt mr-2 text-gray-500"></i>
+                                        ${file.path} <span class="text-gray-500">(${formatSize(file.bytes)})</span>
+                                    </span>
+                                    <a href="${file.link}" target="_blank" class="px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 whitespace-nowrap">
+                                        <i class="fas fa-download mr-1"></i>다운로드
+                                    </a>
+                                </li>
+                            `;
+                        } else {
+                            return `
+                                <li class="p-2 my-1 border border-gray-200 rounded-md flex justify-between items-center text-sm bg-red-50">
+                                    <span class="flex-1 mr-4 break-all text-red-700">
+                                        <i class="fas fa-times-circle mr-2 text-red-500"></i>
+                                        ${file.path} <span class="text-red-500">(${formatSize(file.bytes)})</span>
+                                    </span>
+                                    <span class="px-3 py-1 bg-red-600 text-white text-xs font-semibold rounded-lg cursor-not-allowed">
+                                        생성 실패
+                                    </span>
+                                </li>
+                            `;
+                        }
                     }).join('');
 
                     const modalHTML = `
@@ -214,11 +238,12 @@
                                     <button onclick="document.getElementById('nativeDownloaderModal').remove()" class="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
                                 </div>
                                 <div class="overflow-y-auto flex-grow pr-2">
+                                    ${successfulLinksCount < info.files.length ? `<p class="text-sm text-yellow-800 mb-2 p-2 bg-yellow-100 rounded-md">일부 파일의 링크 생성에 실패했습니다.</p>` : ''}
                                     <ul class="space-y-1">${fileListHTML}</ul>
                                 </div>
                                 <div class="mt-4 pt-4 border-t border-gray-200 flex justify-end gap-3">
-                                     <button onclick="navigator.clipboard.writeText('${realDownloadLinks.join('\\n')}'); showToast('모든 링크가 클립보드에 복사되었습니다.', 'success');" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-                                        <i class="fas fa-copy mr-2"></i>모든 링크 복사
+                                     <button ${realDownloadLinks.length === 0 ? 'disabled' : ''} onclick="navigator.clipboard.writeText('${realDownloadLinks.join('\\n')}'); showToast('성공한 링크가 클립보드에 복사되었습니다.', 'success');" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i class="fas fa-copy mr-2"></i>성공 링크 복사
                                     </button>
                                     <button onclick="document.getElementById('nativeDownloaderModal').remove()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">닫기</button>
                                 </div>
@@ -227,12 +252,12 @@
                     `;
                     
                     document.body.insertAdjacentHTML('beforeend', modalHTML);
-                    addLog(`ID ${torrentId}: 3단계 - 자체 다운로더 팝업을 성공적으로 표시했습니다.`);
+                    addLog(`ID ${torrentId}: 3단계 - 자체 다운로더 팝업을 표시했습니다. (성공: ${successfulLinksCount}/${info.files.length})`);
                     showToast("링크 생성 완료!", "success");
 
                 } else {
-                    showToast("다운로드 링크가 만료되었거나 아직 준비되지 않았습니다.", "warning");
-                    addLog(`ID ${torrentId}: 다운로드 링크를 찾을 수 없습니다. (만료 또는 생성 중)`, "warning");
+                    showToast("다운로드 파일 정보를 찾을 수 없습니다.", "warning");
+                    addLog(`ID ${torrentId}: 다운로드 파일 정보를 찾을 수 없습니다.`, "warning");
                 }
             } catch (error) {
                 showToast("다운로드 링크 생성 중 오류가 발생했습니다.", "error");
