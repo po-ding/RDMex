@@ -160,7 +160,7 @@
             try {
                 const info = await makeApiCall(`/torrents/info/${torrentId}`);
                 if (info && info.links && info.links.length > 0) {
-                    const validLinks = info.links.filter(Boolean); // 비어있는 링크 제거
+                    const validLinks = info.links.filter(Boolean);
                     if (validLinks.length > 0) {
                         const linksString = validLinks.join('\n');
                         const encodedLinks = encodeURIComponent(linksString);
@@ -315,7 +315,9 @@
                     if (diffDays <= 0) { dDayText = '만료'; colorClass = 'text-red-600'; } 
                     else if (diffDays <= 7) { colorClass = 'text-yellow-600'; showToast(`프리미엄 만료일이 ${diffDays}일 남았습니다.`, 'warning'); }
                     apiCombinedStatusEl.innerHTML = `<span class="font-semibold ${colorClass}">${formattedExpiration} (<span class="font-black">${dDayText}</span>)</span>, <span class="font-bold text-blue-600">${user.points}P</span>`;
-                } else { apiCombinedStatusEl.innerHTML = `<span class="font-bold text-red-600">프리미엄 아님</span>`; }
+                } else {
+                    apiCombinedStatusEl.innerHTML = `<span class="font-bold text-red-600">프리미엄 아님</span>`;
+                }
             } catch (e) {
                 showToast(`연결 실패: ${e.message}`, "error");
                 apiCombinedStatusEl.innerHTML = `<span class="font-bold text-red-500" title="${e.message}">연결 실패</span>`;
