@@ -213,7 +213,11 @@
                                 body: `link=${encodeURIComponent(file.privateLink)}`
                             });
                             if (result && result.download) {
-                                filesWithRealLinks.push({ ...file, link: result.download });
+                                filesWithRealLinks.push({ 
+                                    ...file, 
+                                    link: result.download,
+                                    streamingLink: result.streaming
+                                });
                                 successfulLinksCount++;
                             } else {
                                 throw new Error('유효하지 않은 응답 (download 속성 없음)');
@@ -238,6 +242,13 @@
                                     <button onclick="navigator.clipboard.writeText('${file.link}'); showToast('링크가 복사되었습니다.', 'success');" class="px-3 py-1 bg-blue-500 text-white text-xs font-semibold rounded-lg hover:bg-blue-600 whitespace-nowrap">
                                         <i class="fas fa-copy mr-1"></i>링크 복사
                                     </button>
+                                    
+                                    ${file.streamingLink ? `
+                                    <a href="${file.streamingLink}" target="_blank" class="px-3 py-1 bg-purple-600 text-white text-xs font-semibold rounded-lg hover:bg-purple-700 whitespace-nowrap">
+                                        <i class="fas fa-play mr-1"></i>스트리밍
+                                    </a>
+                                    ` : ''}
+
                                     <a href="${file.link}" target="_blank" class="px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 whitespace-nowrap">
                                         <i class="fas fa-download mr-1"></i>다운로드
                                     </a>
@@ -273,14 +284,10 @@
                     addLog(`ID ${torrentId}: 다운로드 파일 정보를 찾을 수 없습니다.`, "warning");
                 }
             } catch (error) {
-                // ==========[ 여기가 수정된 부분입니다 ]==========
                 showToast(`다운로드 링크 생성 중 오류가 발생했습니다: ${error.message}`, "error");
                 addLog(`링크 생성 실패 (ID: ${torrentId}): ${error.message}`, 'error');
-                
-                // 실패 시 RD 페이지를 열어주는 폴백(Fallback) 기능
                 showToast("자동 링크 생성에 실패하여 RD 페이지를 엽니다.", "info");
                 openRdDownloaderPage(torrentId, button); 
-                // ============================================
             } finally {
                 setLoading(button, false);
             }
