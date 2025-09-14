@@ -102,7 +102,7 @@
             }
         }
 
-        // ★★★ [수정됨] displayTorrents 함수: 팟플레이어 버튼 추가 ★★★
+        // ★★★ [수정됨] displayTorrents 함수: 버튼 순서 및 색상 변경 ★★★
         function displayTorrents(torrents) {
             const listEl = document.getElementById("torrentList");
             if (torrents && torrents.length > 0) {
@@ -110,7 +110,7 @@
                     const buttonClasses = "w-9 h-9 flex items-center justify-center text-base rounded-lg";
                     
                     const commonActions = `
-                        <button onclick="hideTorrentFromList(this)" class="${buttonClasses} bg-yellow-500 text-white hover:bg-yellow-600" title="목록에서 숨기기">
+                        <button onclick="hideTorrentFromList(this)" class="${buttonClasses} bg-orange-500 text-white hover:bg-orange-600" title="목록에서 숨기기">
                             <i class="fas fa-eye-slash"></i>
                         </button>
                         <button onclick="deleteTorrent('${t.id}', this)" class="${buttonClasses} bg-red-600 text-white hover:bg-red-700" title="RD 계정에서 영구 삭제">
@@ -119,11 +119,11 @@
                     `;
 
                     const downloadedPrefixActions = `
+                        <button onclick="playInPotplayer('${t.id}', this)" class="${buttonClasses} bg-yellow-500 text-white hover:bg-yellow-600" title="PC 팟플레이어로 재생">
+                            <i class="fas fa-play-circle"></i>
+                        </button>
                         <button onclick="streamFirstVideo('${t.id}', this)" class="${buttonClasses} bg-pink-600 text-white hover:bg-pink-700" title="웹 브라우저로 스트리밍">
                             <i class="fas fa-tv"></i>
-                        </button>
-                        <button onclick="playInPotplayer('${t.id}', this)" class="${buttonClasses} bg-cyan-500 text-white hover:bg-cyan-600" title="PC 팟플레이어로 재생">
-                            <i class="fas fa-play-circle"></i>
                         </button>
                         <button onclick="openRdDownloaderPage('${t.id}', this)" class="${buttonClasses} bg-purple-600 text-white hover:bg-purple-700" title="RD 페이지에서 보기">
                             <i class="fas fa-external-link-alt"></i>
@@ -188,51 +188,29 @@
                 } else { throw new Error("스트리밍 링크를 생성하지 못했습니다."); }
             } catch (error) { const errorMessage = `웹 스트리밍 실패: ${error.message}`; showToast(errorMessage, "error"); addLog(errorMessage, 'error'); } finally { setLoading(button, false); }
         }
-
-        // ★★★ [신규] 팟플레이어 재생 함수 ★★★
+        
         async function playInPotplayer(torrentId, button) {
             setLoading(button, true);
             addLog(`ID ${torrentId}: 팟플레이어 재생용 링크를 찾습니다...`);
             try {
-                // 1. 토렌트 정보에서 파일 목록과 RD 내부 링크 가져오기
                 const info = await makeApiCall(`/torrents/info/${torrentId}`);
                 const videoExtensions = ['.mp4', '.mkv', '.avi', '.mov', '.wmv'];
                 let videoRdLink = null;
                 let videoFileName = null;
-
                 if (info && info.files) {
                     const videoFile = info.files.find(file => videoExtensions.some(ext => file.path.toLowerCase().endsWith(ext)) && file.selected === 1);
-                    if (videoFile) {
-                        videoRdLink = info.links[videoFile.id - 1]; // RD 내부 링크
-                        videoFileName = videoFile.path;
-                    }
+                    if (videoFile) { videoRdLink = info.links[videoFile.id - 1]; videoFileName = videoFile.path; }
                 }
-                
-                if (!videoRdLink) {
-                    throw new Error("재생 가능한 비디오 파일을 찾지 못했습니다.");
-                }
-
+                if (!videoRdLink) { throw new Error("재생 가능한 비디오 파일을 찾지 못했습니다."); }
                 addLog(`ID ${torrentId}: '${videoFileName}' 파일의 실제 스트리밍 주소를 생성합니다.`);
-
-                // 2. RD 내부 링크를 실제 다운로드/스트리밍 가능한 링크로 변환 (Unrestrict)
-                const unrestrictInfo = await makeApiCall(`/unrestrict/link`, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/x-form-urlencoded' }, 
-                    body: `link=${encodeURIComponent(videoRdLink)}` 
-                });
-
+                const unrestrictInfo = await makeApiCall(`/unrestrict/link`, { method: 'POST', headers: { 'Content-Type': 'application/x-form-urlencoded' }, body: `link=${encodeURIComponent(videoRdLink)}` });
                 if (unrestrictInfo && unrestrictInfo.download) {
                     const directLink = unrestrictInfo.download;
                     const potplayerUrl = 'potplayer://' + directLink;
-                    
                     addLog(`ID ${torrentId}: 팟플레이어를 실행합니다...`, 'success');
                     showToast("팟플레이어를 실행합니다.", "success");
-                    
-                    // 3. potplayer:// 프로토콜을 사용하여 팟플레이어 실행
                     window.location.href = potplayerUrl;
-                } else {
-                    throw new Error("실제 스트리밍 링크를 생성하지 못했습니다.");
-                }
+                } else { throw new Error("실제 스트리밍 링크를 생성하지 못했습니다."); }
             } catch (error) {
                 const errorMessage = `팟플레이어 재생 실패: ${error.message}`;
                 showToast(errorMessage, "error");
@@ -255,4 +233,4 @@
         document.addEventListener("DOMContentLoaded", initializeApp);
     </script>
 </body>
-</html>
+</html>```
