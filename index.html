@@ -102,16 +102,15 @@
             }
         }
 
-        // ★★★ [수정됨] displayTorrents 함수: 보장된 색상 클래스로 최종 수정 ★★★
+        // ★★★ [수정됨] displayTorrents 함수: 버튼 색상 최종 수정 ★★★
         function displayTorrents(torrents) {
             const listEl = document.getElementById("torrentList");
             if (torrents && torrents.length > 0) {
                 listEl.innerHTML = torrents.map(t => {
                     const buttonClasses = "w-9 h-9 flex items-center justify-center text-base rounded-lg";
                     
-                    // 모든 항목에 공통으로 표시될 버튼 (색상 수정)
                     const commonActions = `
-                        <button onclick="hideTorrentFromList(this)" class="${buttonClasses} bg-yellow-500 text-white hover:bg-yellow-600" title="목록에서 숨기기">
+                        <button onclick="hideTorrentFromList(this)" class="${buttonClasses} bg-yellow-600 text-white hover:bg-yellow-700" title="목록에서 숨기기">
                             <i class="fas fa-eye-slash"></i>
                         </button>
                         <button onclick="deleteTorrent('${t.id}', this)" class="${buttonClasses} bg-red-600 text-white hover:bg-red-700" title="RD 계정에서 영구 삭제">
@@ -119,15 +118,14 @@
                         </button>
                     `;
 
-                    // 완료된 항목에만 추가될 버튼들 (색상 수정)
                     const downloadedPrefixActions = `
-                        <button onclick="playInPotplayer('${t.id}', this)" class="${buttonClasses} bg-purple-600 text-white hover:bg-purple-700" title="PC 팟플레이어로 재생">
+                        <button onclick="playInPotplayer('${t.id}', this)" class="${buttonClasses} bg-yellow-400 text-black hover:bg-yellow-500" title="PC 팟플레이어로 재생">
                             <i class="fas fa-play-circle"></i>
                         </button>
                         <button onclick="streamFirstVideo('${t.id}', this)" class="${buttonClasses} bg-pink-600 text-white hover:bg-pink-700" title="웹 브라우저로 스트리밍">
                             <i class="fas fa-tv"></i>
                         </button>
-                        <button onclick="openRdDownloaderPage('${t.id}', this)" class="${buttonClasses} bg-indigo-600 text-white hover:bg-indigo-700" title="RD 페이지에서 보기">
+                        <button onclick="openRdDownloaderPage('${t.id}', this)" class="${buttonClasses} bg-purple-600 text-white hover:bg-purple-700" title="RD 페이지에서 보기">
                             <i class="fas fa-external-link-alt"></i>
                         </button>
                         <button onclick="getTorrentInfo('${t.id}', this)" class="${buttonClasses} bg-green-600 text-white hover:bg-green-700" title="다운로드/링크 보기">
