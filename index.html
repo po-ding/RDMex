@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <!-- ... head 부분은 기존과 동일 ... -->
+    <!-- ... head 부분 ... -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>RDMex</title>
@@ -9,12 +9,36 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap:; connect-src 'self' https://api.real-debrid.com https://raw.githubusercontent.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
+    
+    <!-- ★★★ [수정됨] 팟플레이어 버튼 색상 코드를 #fef02e로 변경 ★★★ -->
     <style>
       .fade-in { animation: fadeIn 0.3s ease-in; }
       @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
       .toast { position: fixed; top: 20px; right: 20px; z-index: 1000; }
       .loading { animation: spin 1s linear infinite; }
       @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+      /* 버튼 색상 정의 */
+      .btn-potplayer { background-color: #fef02e; color: black; }
+      .btn-potplayer:hover { background-color: #e5d829; } /* #fef02e 보다 약간 어두운 색 */
+      
+      .btn-stream { background-color: #e84a8e; color: white; }
+      .btn-stream:hover { background-color: #d94680; }
+      
+      .btn-rdpage { background-color: #8854c6; color: white; }
+      .btn-rdpage:hover { background-color: #7949b3; }
+
+      .btn-download { background-color: #25a560; color: white; }
+      .btn-download:hover { background-color: #209255; }
+
+      .btn-link { background-color: #3d79f0; color: white; }
+      .btn-link:hover { background-color: #356ad6; }
+      
+      .btn-hide { background-color: #d88137; color: white; }
+      .btn-hide:hover { background-color: #c07130; }
+
+      .btn-delete { background-color: #d3404d; color: white; }
+      .btn-delete:hover { background-color: #bb3944; }
     </style>
 </head>
 <body class="bg-white min-h-screen">
@@ -102,49 +126,41 @@
             }
         }
 
-        // ★★★ [수정됨] displayTorrents 함수: 이미지와 동일한 색상 적용 (최종) ★★★
+        // ★★★ [수정됨] displayTorrents 함수: 커스텀 클래스 사용 ★★★
         function displayTorrents(torrents) {
             const listEl = document.getElementById("torrentList");
             if (torrents && torrents.length > 0) {
                 listEl.innerHTML = torrents.map(t => {
                     const buttonClasses = "w-9 h-9 flex items-center justify-center text-base rounded-lg";
                     
-                    // 완료되지 않은 항목에 표시될 버튼
                     const commonActions = `
-                        <button onclick="hideTorrentFromList(this)" class="${buttonClasses} bg-yellow-500 text-white hover:bg-yellow-600" title="목록에서 숨기기">
+                        <button class="${buttonClasses} btn-hide" title="목록에서 숨기기" onclick="hideTorrentFromList(this)">
                             <i class="fas fa-eye-slash"></i>
                         </button>
-                        <button onclick="deleteTorrent('${t.id}', this)" class="${buttonClasses} bg-red-600 text-white hover:bg-red-700" title="RD 계정에서 영구 삭제">
+                        <button class="${buttonClasses} btn-delete" title="RD 계정에서 영구 삭제" onclick="deleteTorrent('${t.id}', this)">
                             <i class="fas fa-trash"></i>
                         </button>
                     `;
 
-                    // 완료된 항목에 표시될 전체 버튼
-                    const downloadedActions = `
-                        <button onclick="playInPotplayer('${t.id}', this)" class="${buttonClasses} bg-yellow-400 text-black hover:bg-yellow-500" title="PC 팟플레이어로 재생">
+                    const downloadedPrefixActions = `
+                        <button class="${buttonClasses} btn-potplayer" title="PC 팟플레이어로 재생" onclick="playInPotplayer('${t.id}', this)">
                             <i class="fas fa-play"></i>
                         </button>
-                        <button onclick="streamFirstVideo('${t.id}', this)" class="${buttonClasses} bg-pink-500 text-white hover:bg-pink-600" title="웹 브라우저로 스트리밍">
+                        <button class="${buttonClasses} btn-stream" title="웹 브라우저로 스트리밍" onclick="streamFirstVideo('${t.id}', this)">
                             <i class="fas fa-tv"></i>
                         </button>
-                        <button onclick="openRdDownloaderPage('${t.id}', this)" class="${buttonClasses} bg-purple-600 text-white hover:bg-purple-700" title="RD 페이지에서 보기">
+                        <button class="${buttonClasses} btn-rdpage" title="RD 페이지에서 보기" onclick="openRdDownloaderPage('${t.id}', this)">
                             <i class="fas fa-external-link-alt"></i>
                         </button>
-                        <button onclick="getTorrentInfo('${t.id}', this)" class="${buttonClasses} bg-green-500 text-white hover:bg-green-600" title="다운로드/링크 보기">
+                        <button class="${buttonClasses} btn-download" title="다운로드/링크 보기" onclick="getTorrentInfo('${t.id}', this)">
                             <i class="fas fa-download"></i>
                         </button>
-                        <button onclick="copyLinks('${t.id}', this)" class="${buttonClasses} bg-blue-600 text-white hover:bg-blue-700" title="링크 복사 (파일 1개) / RD 페이지 열기 (2개 이상)">
+                        <button class="${buttonClasses} btn-link" title="링크 복사 (파일 1개) / RD 페이지 열기 (2개 이상)" onclick="copyLinks('${t.id}', this)">
                             <i class="fas fa-link"></i>
-                        </button>
-                        <button onclick="hideTorrentFromList(this)" class="${buttonClasses} bg-yellow-500 text-white hover:bg-yellow-600" title="목록에서 숨기기">
-                            <i class="fas fa-eye-slash"></i>
-                        </button>
-                        <button onclick="deleteTorrent('${t.id}', this)" class="${buttonClasses} bg-red-600 text-white hover:bg-red-700" title="RD 계정에서 영구 삭제">
-                            <i class="fas fa-trash"></i>
                         </button>
                     `;
                     
-                    const progressBarColor = t.status === 'downloaded' ? 'bg-blue-600' : 'bg-blue-600';
+                    const progressBarColor = 'bg-blue-600';
 
                     return `
                     <div class="torrent-item border-b border-gray-200 p-3 hover:bg-gray-200 transition duration-200">
@@ -164,7 +180,7 @@
                                 ${t.status === "waiting_files_selection" ? `<button onclick="selectFiles('${t.id}')" class="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700"><i class="fas fa-check-square mr-1"></i>파일 선택</button>` : ""}
                             </div>
                             <div class="flex gap-2 flex-wrap items-center">
-                                ${t.status === "downloaded" ? downloadedActions : commonActions}
+                                ${t.status === "downloaded" ? downloadedPrefixActions + commonActions : commonActions}
                             </div>
                         </div>
                     </div>`;
@@ -241,4 +257,4 @@
         document.addEventListener("DOMContentLoaded", initializeApp);
     </script>
 </body>
-</html>```
+</html>
