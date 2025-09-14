@@ -64,10 +64,9 @@
     
     <div id="toastContainer" class="toast"></div>
 
-    <!-- 라이브러리를 먼저, 그 다음 애플리케이션 코드를 순서대로 로드합니다. -->
-    <script src="rdmex.js"></script>
-    <script src="parse-torrent.min.js"></script>
-
+    <!-- ★★★ [수정] defer 속성을 추가하여 스크립트 로딩 순서 및 시점 보장 ★★★ -->
+    <script src="parse-torrent.min.js" defer></script>
+    <script src="rdmex.js" defer></script>
 
 </body>
 </html>
