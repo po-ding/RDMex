@@ -102,15 +102,16 @@
             }
         }
 
-        // ★★★ [수정됨] displayTorrents 함수: 이미지와 동일한 색상 적용 ★★★
+        // ★★★ [수정됨] displayTorrents 함수: 이미지와 동일한 색상 적용 (최종) ★★★
         function displayTorrents(torrents) {
             const listEl = document.getElementById("torrentList");
             if (torrents && torrents.length > 0) {
                 listEl.innerHTML = torrents.map(t => {
                     const buttonClasses = "w-9 h-9 flex items-center justify-center text-base rounded-lg";
                     
+                    // 완료되지 않은 항목에 표시될 버튼
                     const commonActions = `
-                        <button onclick="hideTorrentFromList(this)" class="${buttonClasses} bg-orange-500 text-white hover:bg-orange-600" title="목록에서 숨기기">
+                        <button onclick="hideTorrentFromList(this)" class="${buttonClasses} bg-yellow-500 text-white hover:bg-yellow-600" title="목록에서 숨기기">
                             <i class="fas fa-eye-slash"></i>
                         </button>
                         <button onclick="deleteTorrent('${t.id}', this)" class="${buttonClasses} bg-red-600 text-white hover:bg-red-700" title="RD 계정에서 영구 삭제">
@@ -118,7 +119,8 @@
                         </button>
                     `;
 
-                    const downloadedPrefixActions = `
+                    // 완료된 항목에 표시될 전체 버튼
+                    const downloadedActions = `
                         <button onclick="playInPotplayer('${t.id}', this)" class="${buttonClasses} bg-yellow-400 text-black hover:bg-yellow-500" title="PC 팟플레이어로 재생">
                             <i class="fas fa-play"></i>
                         </button>
@@ -133,6 +135,12 @@
                         </button>
                         <button onclick="copyLinks('${t.id}', this)" class="${buttonClasses} bg-blue-600 text-white hover:bg-blue-700" title="링크 복사 (파일 1개) / RD 페이지 열기 (2개 이상)">
                             <i class="fas fa-link"></i>
+                        </button>
+                        <button onclick="hideTorrentFromList(this)" class="${buttonClasses} bg-yellow-500 text-white hover:bg-yellow-600" title="목록에서 숨기기">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
+                        <button onclick="deleteTorrent('${t.id}', this)" class="${buttonClasses} bg-red-600 text-white hover:bg-red-700" title="RD 계정에서 영구 삭제">
+                            <i class="fas fa-trash"></i>
                         </button>
                     `;
                     
@@ -156,7 +164,7 @@
                                 ${t.status === "waiting_files_selection" ? `<button onclick="selectFiles('${t.id}')" class="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700"><i class="fas fa-check-square mr-1"></i>파일 선택</button>` : ""}
                             </div>
                             <div class="flex gap-2 flex-wrap items-center">
-                                ${t.status === "downloaded" ? downloadedPrefixActions + commonActions : commonActions}
+                                ${t.status === "downloaded" ? downloadedActions : commonActions}
                             </div>
                         </div>
                     </div>`;
@@ -233,4 +241,4 @@
         document.addEventListener("DOMContentLoaded", initializeApp);
     </script>
 </body>
-</html>
+</html>```
