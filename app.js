@@ -1,4 +1,5 @@
 // app.js
+const API_BASE = "https://api.real-debrid.com/rest/1.0"; 
 
 // ============== 전역 변수 및 상수 ==============
 const API_BASE = "https://api.real-debrid.com/rest/1.0"; let refreshTimer = null; let fastRefreshCount = 0; let slowRefreshCount = 0;
