@@ -119,7 +119,7 @@
             }
         }
         
-        // ★★★ [수정됨] 오류 처리가 개선된 마그넷 변환 로직 ★★★
+        // ★★★ [수정됨] 파일 유효성 검사 기능이 추가된 마그넷 변환 로직 ★★★
         function convertTorrentToMagnet(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -127,6 +127,12 @@
                     try {
                         const arrayBuffer = e.target.result;
                         const torrentData = new Uint8Array(arrayBuffer);
+
+                        // 파일의 첫 글자가 'd'가 아니면 유효하지 않은 토렌트로 간주 (HTML 등 필터링)
+                        if (torrentData.length === 0 || String.fromCharCode(torrentData[0]) !== 'd') {
+                            throw new Error("유효한 토렌트 파일이 아닌 것 같습니다 (HTML 파일 등).");
+                        }
+
                         const decoded = Bencode.decode(torrentData);
                         if (!decoded.info) {
                             throw new Error("토렌트 파일에 'info' 메타데이터가 없습니다.");
@@ -149,14 +155,12 @@
                         addLog(`'${file.name}' -> 마그넷 변환 완료.`);
                         resolve();
                     } catch (error) {
-                        // 오류가 Error 객체인지 문자열인지 구분하여 메시지 생성
                         const errorMessage = (error instanceof Error) ? error.message : error;
                         showToast("마그넷 변환 실패: " + errorMessage, "error");
                         addLog(`마그넷 변환 실패: ${errorMessage}`, 'error');
                         reject(error);
                     }
                 };
-                // 파일 읽기 자체에 실패했을 때의 오류 처리
                 reader.onerror = (event) => {
                     const errorMsg = "파일을 읽는 중 오류가 발생했습니다.";
                     addLog(errorMsg, 'error');
@@ -180,7 +184,6 @@
             } catch (e) {
                 // 에러는 convertTorrentToMagnet 내부에서 이미 UI로 처리됨
             } finally {
-                // 변환 성공/실패와 관계없이 파일 선택 해제
                 fileInput.value = '';
                 displayFileName();
                 setLoading(button, false);
