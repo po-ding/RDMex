@@ -1,0 +1,29 @@
+```css
+/* style.css */
+.fade-in { animation: fadeIn 0.3s ease-in; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.toast { position: fixed; top: 20px; right: 20px; z-index: 1000; }
+.loading { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* 버튼 색상 정의 */
+.btn-potplayer { background-color: #fee92e; color: black; }
+.btn-potplayer:hover { background-color: #e5d129; }
+
+.btn-stream { background-color: #e84a8e; color: white; }
+.btn-stream:hover { background-color: #d94680; }
+
+.btn-rdpage { background-color: #8854c6; color: white; }
+.btn-rdpage:hover { background-color: #7949b3; }
+
+.btn-download { background-color: #25a560; color: white; }
+.btn-download:hover { background-color: #209255; }
+
+.btn-link { background-color: #3d79f0; color: white; }
+.btn-link:hover { background-color: #356ad6; }
+
+.btn-hide { background-color: #d88137; color: white; }
+.btn-hide:hover { background-color: #c07130; }
+
+.btn-delete { background-color: #d3404d; color: white; }
+.btn-delete:hover { background-color: #bb3944; }
