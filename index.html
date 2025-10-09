@@ -96,7 +96,7 @@
             </div>
         </div>
 
-        <!-- ★★★★★ 2-Button Upload Layout ★★★★★ -->
+        <!-- 2-Button Upload Layout -->
         <div class="flex flex-col md:flex-row gap-4 mt-6">
             <!-- Button 1: Magnet or Convert Upload -->
             <button onclick="handleConvertUpload(this)" id="convertUploadButton" class="w-full px-4 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-200 flex items-center justify-center text-xl flex-1">
@@ -167,16 +167,11 @@
     <!-- Toast Message Container -->
     <div id="toastContainer"></div>
 
-    <!-- External and Local Scripts -->
+    <!-- ★★★★★ Local Scripts Loading Section ★★★★★ -->
     <script src="cordova.js"></script>
-    <!-- Use CDN for libraries to reduce local dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/js-sha1@0.6.0/src/sha1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bencoder@2.0.0/bencoder.min.js"></script>
-    <!-- Base32.js might be part of another library or custom -->
-    <script>
-      // Simple Base32 implementation if needed, otherwise load from file
-      var Base32 = (function(){var e="ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",r=e.length;return{encode:function(t){for(var n="",o=0,a=0,f=0;f<t.length;){var i=t.charCodeAt(f++);if(a>3?o=t[f-1]>>8-a&255|o<<a:o|=t[f-1]<<a,a+=8,a>=5)n+=e.charAt(o>>a-5),o&=Math.pow(2,a-5)-1,a-=5}return a>0&&(n+=e.charAt(o<<5-a)),n},decode:function(e){for(vart="",n=0,o=0,a=0;a<e.length;a++){var f=e.charAt(a),i=0;if("A"<=f&&f<="Z")i=f.charCodeAt(0)-65;else if("2"<=f&&f<="7")i=f.charCodeAt(0)-24;else{if("="===f)break;continue}o|=i<<n,n+=5,n>=8&&(t+=String.fromCharCode(o&255),o>>=8,n-=8)}return t}}}());
-    </script>
+    <script src="sha1.js"></script>
+    <script src="bencode.js"></script>
+    <script src="src/base32.js"></script>
     
     <!-- Main Application Script -->
     <script src="app.js"></script>
