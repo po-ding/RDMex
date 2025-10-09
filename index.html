@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RDMex</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap:; connect-src 'self' https://api.real-debrid.com https://raw.githubusercontent.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-white min-h-screen">
+    <!-- 헤더 -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-800 text-white p-4 shadow-md flex justify-between items-center">
+      <div><h1 class="text-2xl font-bold flex items-center"><i class="fas fa-rocket mr-3"></i>RDMex</h1></div>
+      <div class="text-right opacity-90"><span id="apiListSize" class="text-xl font-bold"></span></div>
+    </div>
+
+    <!-- 메인 컨텐츠 -->
+    <div class="container mx-auto px-4 md:px-6 py-8 max-w-7xl">
+      
+      <!-- 입력 섹션 -->
+      <div class="bg-gray-100 rounded-lg shadow-lg p-6 mb-8">
+        <div class="flex flex-col md:flex-row gap-6">
+            <div class="flex-1 flex relative h-32 md:h-auto">
+                <div id="magnetPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-opacity duration-300">
+                    <i class="fas fa-magnet text-4xl text-gray-400"></i>
+                    <p class="mt-2 text-sm text-gray-600">마그넷 링크를 붙여넣고 아래 버튼을 누르세요</p>
+                </div>
+                <textarea id="magnetInput" rows="2" class="w-full h-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-left bg-transparent z-10 md:min-h-[128px]"></textarea>
+            </div>
+            <div class="flex-1 flex h-32 md:h-auto">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center w-full h-full flex flex-col justify-center items-center relative" id="dropZone">
+                    <input type="file" id="torrentFile" accept=".torrent" class="hidden" onchange="handleFileProcessing()" />
+                    <div id="dropZoneContent" class="flex flex-col items-center justify-center h-full">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i>
+                        <p class="mt-2 text-sm text-gray-600">.torrent 파일을 드롭하거나 클릭하여 추가</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button onclick="handleUnifiedUpload(this)" id="unifiedUploadButton" class="w-full mt-6 px-4 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-200 flex items-center justify-center text-2xl"><i class="fas fa-upload mr-3"></i> </button>
+<button onclick="handleUnifiedUpload(this)" id="unifiedUploadButton" ...>...</button>
+
+<!-- ▼▼▼▼▼▼▼▼▼▼ 이 코드를 여기에 추가 ▼▼▼▼▼▼▼▼▼▼ -->
+<div id="directUploadOption" class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200" style="display: none;">
+  <label for="directUploadCheckbox" class="flex items-center cursor-pointer">
+    <input type="checkbox" id="directUploadCheckbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+    <span class="ml-3 text-gray-800 font-semibold">토렌트 파일 직접 전송 (변환 없음)</span>
+  </label>
+  <p class="text-xs text-gray-500 mt-1 ml-8">파일을 서버로 바로 보냅니다. (비공개 트래커 지원)<br>이 옵션 선택 시 아래 트래커 목록은 적용되지 않습니다.</p>
+</div>
+<!-- ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ -->
+
+<div class="mt-6">
+  <div class="flex justify-between items-center mb-1">
+<div class="mt-6">
+          <div class="flex justify-between items-center mb-1">
+            <label for="trackerInput" class="block text-sm font-medium text-gray-700 flex items-center"><span class="cursor-pointer" onclick="fetchBestTrackers()"><i class="fas fa-satellite-dish mr-2 text-purple-500"></i></span><span id="trackerStatusIcon" class="ml-2"></span><span id="trackerUpdateTime" class="text-lg font-bold text-gray-700 ml-3"></span></label>
+          </div>
+          <div class="relative"><textarea id="trackerInput" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="RD 추가 시 마그넷에 적용할 트래커 목록입니다. 최신 목록을 자동으로 불러옵니다..."></textarea></div>
+        </div>
+      </div>
+
+      <!-- 토렌트 목록, 로그, API 섹션 등 나머지 HTML -->
+      <div class="bg-gray-100 rounded-lg shadow-lg mb-8 relative" style="height: 600px">
+        <div class="absolute top-0 left-0 right-0 p-6 h-20 border-b border-gray-200"><h2 class="text-xl font-semibold flex items-center justify-center text-gray-800 h-full"><i class="fas fa-list mr-2 text-blue-500"></i>토렌트 목록</h2></div>
+        <div class="absolute top-20 bottom-20 left-0 right-0 overflow-y-auto p-4"><div id="torrentList" class="space-y-3"><p class="text-gray-500 text-center py-8">토렌트 목록을 불러오려면 새로고침 버튼을 클릭하세요.</p></div></div>
+        <div class="absolute bottom-0 left-0 right-0 p-6 h-20 border-t border-gray-200"><div class="flex justify-center items-center h-full gap-4"><button onclick="refreshTorrents()" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700"><i class="fas fa-sync-alt mr-2"></i>새로고침</button><button onclick="deleteCompleted()" class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700"><i class="fas fa-trash mr-2"></i>완료삭제</button></div></div>
+      </div>
+      <div class="bg-gray-100 rounded-lg shadow-lg p-6"><h2 class="text-xl font-semibold mb-4 flex items-center text-gray-800"><i class="fas fa-info-circle mr-2 text-blue-500"></i>상태 및 로그</h2><div id="statusLog" class="bg-white rounded-lg p-4 max-h-60 overflow-y-auto"><p id="initialLogMessage" class="text-gray-500">준비 완료.</p></div></div>
+      <div class="bg-gray-100 rounded-lg shadow-lg p-6 mt-8">
+        <div class="flex justify-between items-center mb-4"><h2 class="text-xl font-semibold flex items-center text-gray-800"><i class="fas fa-key mr-2 text-yellow-500"></i><span class="text-black">API</span><span id="apiCombinedStatus" class="ml-3 text-xl"></span></h2></div>
+        <input type="text" id="apiToken" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Real-Debrid API 토큰을 입력하세요" /><p class="text-xs text-gray-500 mt-2">API 토큰은 <a href="https://real-debrid.com/apitoken" target="_blank" class="text-blue-600 underline">real-debrid.com/apitoken</a> 에서 발급받을 수 있습니다.<br/><span class="text-red-500">연결 실패 시:</span> 토큰이 정확한지, 인터넷 연결, 브라우저 확장 프로그램(광고 차단 등)을 확인해주세요.</p>
+        <div class="flex gap-4 mt-4"><button onclick="saveToken()" class="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700"><i class="fas fa-save mr-2"></i>저장</button><button onclick="testConnection()" class="flex-1 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700"><i class="fas fa-plug mr-2"></i>연결 테스트</button></div>
+      </div>
+    </div>
+    
+    <!-- 토스트 메시지 컨테이너 -->
+    <div id="toastContainer" class="toast"></div>
+
+    <!-- 로컬/라이브러리 스크립트 로드 -->
+    <script src="cordova.js"></script>
+    <script src="sha1.js"></script>
+    <script src="bencode.js"></script>
+    <script src="src/base32.js"></script>
+    
+    <!-- 분리된 메인 스크립트 로드 -->
+    <script src="app.js"></script>
+</body>
+</html>
+
+
