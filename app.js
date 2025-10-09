@@ -1,5 +1,8 @@
 // ============== 전역 변수 및 상수 ==============
-const API_BASE = "https://api.real-debrid.com/rest/1.0"; let refreshTimer = null; let fastRefreshCount = 0; let slowRefreshCount = 0;
+const API_BASE = "https://api.real-debrid.com/rest/1.0";
+let refreshTimer = null;
+let fastRefreshCount = 0;
+let slowRefreshCount = 0;
 
 // ============== 보조 함수 (상단에 정의) ==============
 function addLog(message, type = "info") { const logEl = document.getElementById("statusLog"); const time = new Date().toLocaleTimeString(); const iconClass = type === "error" ? "fa-times-circle text-red-500" : type === "success" ? "fa-check-circle text-green-500" : type === "warning" ? "fa-exclamation-triangle text-yellow-500" : "fa-info-circle text-blue-500"; const initialMsg = document.getElementById("initialLogMessage"); if (initialMsg) initialMsg.remove(); const entry = document.createElement("div"); entry.className = `mb-2 p-2 border-l-4 ${type === "error" ? "border-red-400 bg-red-50" : type === "success" ? "border-green-400 bg-green-50" : type === "warning" ? "border-yellow-400 bg-yellow-50" : "border-blue-400 bg-blue-50"}`; entry.innerHTML = `<span class="text-xs text-gray-500">[${time}]</span> <i class="fas ${iconClass} ml-2 mr-2"></i> <span>${message}</span>`; logEl.appendChild(entry); logEl.scrollTop = logEl.scrollHeight; }
@@ -9,16 +12,149 @@ function getStatusClass(status) { return { waiting_files_selection: "bg-yellow-1
 function getStatusText(status) { return { waiting_files_selection: "파일 선택 대기", queued: "대기 중", downloading: "다운로드 중", downloaded: "완료", error: "오류", dead: "데드 토렌트" }[status] || status; }
 function formatSize(bytes) { if (bytes === 0) return "0 B"; const k = 1024; const sizes = ["B", "KB", "MB", "GB", "TB"]; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]; }
 function isMobile() { const hasTouchEvent = 'ontouchstart' in window || navigator.maxTouchPoints > 0; const isMobileUA = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent); return hasTouchEvent && isMobileUA; }
-function displayFileName(file) { const dropZoneContent = document.getElementById("dropZoneContent"); if (file) { dropZoneContent.innerHTML = `<div class="text-center"><i class="fas fa-check-circle text-green-500 mr-2"></i> <strong>${file.name}</strong> (${formatSize(file.size)})</div>`; } else { dropZoneContent.innerHTML = `<i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i><p class="mt-2 text-sm text-gray-600">.torrent 파일을 드롭하거나 클릭하여 RD에 바로 추가</p>`; } }
+
+// ★★★ [수정됨] 체크박스 UI를 제어하는 기능 추가
+function displayFileName(file) {
+    const dropZoneContent = document.getElementById("dropZoneContent");
+    const directUploadOption = document.getElementById("directUploadOption"); // ★★★
+    if (file) {
+        dropZoneContent.innerHTML = `<div class="text-center"><i class="fas fa-check-circle text-green-500 mr-2"></i> <strong>${file.name}</strong> (${formatSize(file.size)})</div>`;
+        directUploadOption.style.display = 'block'; // ★★★ 파일 선택 시 옵션 보이기
+    } else {
+        dropZoneContent.innerHTML = `<i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i><p class="mt-2 text-sm text-gray-600">.torrent 파일을 드롭하거나 클릭하여 RD에 바로 추가</p>`;
+        directUploadOption.style.display = 'none'; // ★★★ 파일 없을 시 옵션 숨기기
+    }
+}
+
 function fileToMagnet(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = function(e) { try { const torrentDataString = e.target.result; const decoded = Bencode.decode(torrentDataString); if (!decoded.info) throw new Error("토렌트 파일에 'info' 메타데이터가 없습니다."); const infoBencoded = Bencode.encode(decoded.info); const sha1 = new SHA1(); sha1.update(infoBencoded); const infoHash = sha1.digest(); let binaryHashString = ''; for (let i = 0; i < infoHash.length; i++) { binaryHashString += String.fromCharCode(infoHash[i]); } const infoHashBase32 = Base32.encode(binaryHashString).replace(/=/g, '').toLowerCase(); const magnetURI = `magnet:?xt=urn:btih:${infoHashBase32}&dn=${encodeURIComponent(decoded.info.name || '')}`; resolve(magnetURI); } catch (error) { const errorMessage = (error instanceof Error) ? error.message : error; reject(new Error(errorMessage)); } }; reader.onerror = () => reject(new Error("파일을 읽는 중 오류가 발생했습니다.")); reader.readAsBinaryString(file); }); }
-async function handleFileProcessing() { const uploadButton = document.getElementById('unifiedUploadButton'); const fileInput = document.getElementById('torrentFile'); const trackerInput = document.getElementById("trackerInput"); if (fileInput.files.length === 0) return; const file = fileInput.files[0]; displayFileName(file); setLoading(uploadButton, true); addLog(`토렌트 파일(${file.name}) 처리를 시작합니다...`); try { addLog("1단계: 마그넷 링크로 변환 중..."); const magnetURI = await fileToMagnet(file); addLog("1단계: 변환 성공.", "success"); addLog("2단계: 트래커 정보 결합 중..."); const trackers = trackerInput.value.trim().split("\n").filter(Boolean); const trackerString = trackers.map(tr => `&tr=${encodeURIComponent(tr.trim())}`).join(""); const finalMagnet = magnetURI + trackerString; addLog(`2단계: ${trackers.length}개의 트래커 결합 완료.`, "success"); addLog("3단계: Real-Debrid에 추가 요청..."); const response = await makeApiCall("/torrents/addMagnet", { method: "POST", headers: { "Content-Type": "application/x-form-urlencoded" }, body: `magnet=${encodeURIComponent(finalMagnet)}` }); if (!response || !response.id) throw new Error("API 응답에서 토렌트 ID를 받지 못했습니다."); const torrentId = response.id; addLog(`3단계: ID ${torrentId} 추가 성공. 파일 선택을 기다립니다...`, "success"); const maxRetries = 15; let readyForSelection = false; for (let i = 0; i < maxRetries; i++) { const info = await makeApiCall(`/torrents/info/${torrentId}`); if (info.status === 'waiting_files_selection') { readyForSelection = true; break; } if (['downloading', 'downloaded', 'queued', 'error', 'dead'].includes(info.status)) { addLog(`ID ${torrentId}는 이미 처리 중이거나 다른 상태(${info.status})입니다. 파일 선택을 건너뜁니다.`); break; } await new Promise(resolve => setTimeout(resolve, 2000)); } if (readyForSelection) { addLog(`ID ${torrentId} 파일 선택을 시작합니다.`); await makeApiCall(`/torrents/selectFiles/${torrentId}`, { method: "POST", headers: { "Content-Type": "application/x-form-urlencoded" }, body: "files=all" }); addLog(`ID ${torrentId} 파일 선택 완료. 다운로드가 시작됩니다.`, "success"); } showToast(`'${file.name}' 파일이 RD에 성공적으로 추가되었습니다.`, "success"); setTimeout(() => startOrResetRefreshCycle(), 1500); } catch (error) { const errorMessage = `파일 처리 실패: ${error.message}`; showToast(errorMessage, "error"); addLog(errorMessage, "error"); } finally { fileInput.value = ''; setTimeout(() => displayFileName(null), 1000); setLoading(uploadButton, false); } }
+
+// ★★★ [수정됨] 기존 파일 처리 로직 변경
+async function handleFileProcessing() {
+    const uploadButton = document.getElementById('unifiedUploadButton');
+    const fileInput = document.getElementById('torrentFile');
+    if (fileInput.files.length === 0) return;
+
+    const file = fileInput.files[0];
+    displayFileName(file);
+    setLoading(uploadButton, true);
+    addLog(`토렌트 파일(${file.name}) 처리를 시작합니다...`);
+    
+    // ★★★ 분기 처리 시작 ★★★
+    const useDirectUpload = document.getElementById('directUploadCheckbox').checked;
+
+    try {
+        if (useDirectUpload) {
+            // ★★★ 새로운 방식: 파일 직접 업로드
+            await uploadTorrentFileDirectly(file);
+        } else {
+            // ★★★ 기존 방식: 마그넷으로 변환하여 업로드
+            await convertAndUploadAsMagnet(file);
+        }
+        
+        // 공통 성공 처리
+        showToast(`'${file.name}' 파일이 RD에 성공적으로 추가되었습니다.`, "success");
+        setTimeout(() => startOrResetRefreshCycle(), 1500);
+
+    } catch (error) {
+        const errorMessage = `파일 처리 실패: ${error.message}`;
+        showToast(errorMessage, "error");
+        addLog(errorMessage, "error");
+    } finally {
+        fileInput.value = '';
+        setTimeout(() => displayFileName(null), 1000);
+        setLoading(uploadButton, false);
+        document.getElementById('directUploadCheckbox').checked = false; // 체크박스 초기화
+    }
+}
+
+// ★★★ [신규] 파일 직접 업로드 로직
+async function uploadTorrentFileDirectly(file) {
+    addLog("1단계: 파일을 Real-Debrid 서버로 직접 전송합니다.");
+
+    const fileData = await file.arrayBuffer(); // 파일을 ArrayBuffer로 읽기
+    const response = await makeApiCall("/torrents/addTorrent", {
+        method: "PUT",
+        body: fileData // ArrayBuffer를 body에 담아 전송
+    });
+
+    if (!response || !response.id) throw new Error("API 응답에서 토렌트 ID를 받지 못했습니다.");
+    
+    const torrentId = response.id;
+    addLog(`1단계: ID ${torrentId} 추가 성공. 파일 선택을 기다립니다...`, "success");
+    
+    // 파일 선택 대기 및 자동 선택 로직 (기존 로직 재사용)
+    await waitForAndSelectFiles(torrentId);
+}
+
+// ★★★ [리팩토링] 기존 마그넷 변환 로직을 별도 함수로 분리
+async function convertAndUploadAsMagnet(file) {
+    const trackerInput = document.getElementById("trackerInput");
+
+    addLog("1단계: 마그넷 링크로 변환 중...");
+    const magnetURI = await fileToMagnet(file);
+    addLog("1단계: 변환 성공.", "success");
+
+    addLog("2단계: 트래커 정보 결합 중...");
+    const trackers = trackerInput.value.trim().split("\n").filter(Boolean);
+    const trackerString = trackers.map(tr => `&tr=${encodeURIComponent(tr.trim())}`).join("");
+    const finalMagnet = magnetURI + trackerString;
+    addLog(`2단계: ${trackers.length}개의 트래커 결합 완료.`, "success");
+
+    addLog("3단계: Real-Debrid에 추가 요청...");
+    const response = await makeApiCall("/torrents/addMagnet", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-form-urlencoded" },
+        body: `magnet=${encodeURIComponent(finalMagnet)}`
+    });
+
+    if (!response || !response.id) throw new Error("API 응답에서 토렌트 ID를 받지 못했습니다.");
+    
+    const torrentId = response.id;
+    addLog(`3단계: ID ${torrentId} 추가 성공. 파일 선택을 기다립니다...`, "success");
+    
+    // 파일 선택 대기 및 자동 선택 로직 (기존 로직 재사용)
+    await waitForAndSelectFiles(torrentId);
+}
+
+// ★★★ [신규] 파일 선택 대기 및 자동 선택 (중복 로직 통합)
+async function waitForAndSelectFiles(torrentId) {
+    const maxRetries = 15;
+    let readyForSelection = false;
+    for (let i = 0; i < maxRetries; i++) {
+        const info = await makeApiCall(`/torrents/info/${torrentId}`);
+        if (info.status === 'waiting_files_selection') {
+            readyForSelection = true;
+            break;
+        }
+        if (['downloading', 'downloaded', 'queued', 'error', 'dead'].includes(info.status)) {
+            addLog(`ID ${torrentId}는 이미 처리 중이거나 다른 상태(${info.status})입니다. 파일 선택을 건너뜁니다.`);
+            return; // 함수 종료
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+
+    if (readyForSelection) {
+        addLog(`ID ${torrentId} 파일 선택을 시작합니다.`);
+        await makeApiCall(`/torrents/selectFiles/${torrentId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-form-urlencoded" },
+            body: "files=all"
+        });
+        addLog(`ID ${torrentId} 파일 선택 완료. 다운로드가 시작됩니다.`, "success");
+    } else {
+        // 타임아웃 또는 기타 상태로 인해 파일 선택을 진행할 수 없는 경우
+        addLog(`ID ${torrentId}의 파일 선택 단계로 진입하지 못했습니다. 수동 확인이 필요할 수 있습니다.`, "warning");
+    }
+}
+
+
 function getToken() { return localStorage.getItem("rdToken"); }
 function saveToken() { const token = document.getElementById("apiToken").value.trim(); if (token) { localStorage.setItem("rdToken", token); showToast("API 토큰이 저장되었습니다", "success"); testConnection(); } else { showToast("토큰을 입력해주세요", "warning"); } }
 async function makeApiCall(endpoint, options = {}) { const token = getToken(); if (!token) throw new Error("API 토큰이 설정되지 않았습니다."); const url = `${API_BASE}${endpoint}`; const headers = { Authorization: `Bearer ${token}`, ...(options.headers || {}) }; const finalOptions = { ...options, headers }; try { const response = await fetch(url, finalOptions); if (response.status === 204) return null; const data = await response.json(); if (!response.ok) { const errorDetails = data && data.error ? `${data.error_code || ''} - ${data.error}` : response.statusText; throw new Error(`API 오류: ${response.status} - ${errorDetails}`); } return data; } catch (error) { addLog(`API 호출 실패: ${error.message}`, "error"); throw error; } }
 function scheduledRefresh() { if (fastRefreshCount > 0) { addLog(`[자동 갱신] 1분 간격 새로고침 (${fastRefreshCount - 1}회 남음)`); refreshTorrents(); fastRefreshCount--; if (fastRefreshCount === 0) { addLog("빠른 갱신 종료. 5분 간격으로 전환."); clearInterval(refreshTimer); if (slowRefreshCount > 0) { refreshTimer = setInterval(scheduledRefresh, 300000); } } } else if (slowRefreshCount > 0) { addLog(`[자동 갱신] 5분 간격 새로고침 (${slowRefreshCount - 1}회 남음)`); refreshTorrents(); slowRefreshCount--; if (slowRefreshCount === 0) { addLog("자동 갱신 종료."); clearInterval(refreshTimer); refreshTimer = null; } } else { if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; } } }
 function startOrResetRefreshCycle() { if (refreshTimer) clearInterval(refreshTimer); addLog("자동 갱신 주기 시작."); fastRefreshCount = 5; slowRefreshCount = 11; scheduledRefresh(); refreshTimer = setInterval(scheduledRefresh, 60000); }
 async function fetchBestTrackers() { const trackerInput = document.getElementById("trackerInput"); const statusIcon = document.getElementById("trackerStatusIcon"); const updateTimeEl = document.getElementById("trackerUpdateTime"); const curatedTrackers = [ 'udp://tracker.opentrackr.org:1337/announce', 'udp://open.stealth.si:80/announce', 'udp://exodus.desync.com:6969/announce', 'udp://tracker.torrent.eu.org:451/announce', 'udp://tracker.cyberia.is:6969/announce', 'udp://tracker.openbittrent.com:80/announce', 'udp://tracker.zer0day.to:1337/announce', 'udp://p4p.arenabg.com:1337/announce', 'udp://tracker.leechers-paradise.org:6969/announce', 'udp://9.rarbg.to:2710/announce', 'http://open.tracker.cl:1337/announce', 'udp://open.demonii.com:1337/announce', 'udp://explodie.org:6969/announce', 'udp://public.tracker.vraphim.com:6969/announce', 'udp://tracker.dler.org:6969/announce' ]; const externalTrackerUrls = [ 'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt', 'https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all_ip.txt' ]; statusIcon.innerHTML = '<i class="fas fa-spinner loading text-purple-500"></i>'; addLog(`최신 통합 트래커 목록을 불러옵니다...`); try { const responses = await Promise.all(externalTrackerUrls.map(url => fetch(url))); for (const response of responses) { if (!response.ok) throw new Error(`서버 응답 오류: ${response.status} for ${response.url}`); } const externalTexts = await Promise.all(responses.map(res => res.text())); const combinedTrackers = curatedTrackers.concat(externalTexts.join('\n').split('\n')); const uniqueTrackers = [...new Set(combinedTrackers.map(l => l.trim()).filter(Boolean))]; if (uniqueTrackers.length > 0) { trackerInput.value = uniqueTrackers.join('\n'); statusIcon.innerHTML = '<i class="fas fa-check-circle text-green-500" title="최신 트래커 로딩 완료"></i>'; const message = `통합된 고유 트래커 ${uniqueTrackers.length}개를 불러왔습니다.`; showToast(message, 'success'); const now = new Date(); const formattedTime = now.toLocaleString('ko-KR', { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }); updateTimeEl.innerHTML = `${uniqueTrackers.length}개<br class="md:hidden"> ${formattedTime}`; } else { throw new Error('불러온 트래커 목록이 비어있습니다.'); } } catch (error) { statusIcon.innerHTML = '<i class="fas fa-times-circle text-red-500" title="트래커 로딩 실패"></i>'; const errorMessage = `트래커 로딩 실패: ${error.message}`; addLog(errorMessage, 'error'); showToast(errorMessage, 'error'); updateTimeEl.textContent = '업데이트 실패'; } }
-async function handleUnifiedUpload(button) { const magnetInput = document.getElementById("magnetInput"); const trackerInput = document.getElementById("trackerInput"); const magnets = magnetInput.value.trim().split('\n').map(line => line.trim()).filter(line => line.startsWith('magnet:?')); if (magnets.length === 0) { showToast("추가할 유효한 마그넷 링크가 없습니다.", "warning"); return; } setLoading(button, true); let successCount = 0; let errorCount = 0; addLog(`총 ${magnets.length}개의 마그넷 처리를 시작합니다.`); try { const waitForFileSelection = async (torrentId) => { const maxRetries = 15; const delay = 2000; for (let i = 0; i < maxRetries; i++) { const info = await makeApiCall(`/torrents/info/${torrentId}`); if (info.status === 'waiting_files_selection') { return true; } if (['downloading', 'downloaded', 'queued', 'error', 'dead'].includes(info.status)) { addLog(`ID ${torrentId}는 이미 처리 중이거나 다른 상태(${info.status})입니다. 파일 선택을 건너뜁니다.`); return false; } await new Promise(resolve => setTimeout(resolve, delay)); } throw new Error("파일 목록을 기다리는 시간이 초과되었습니다 (타임아웃)."); }; const trackers = trackerInput.value.trim().split("\n").filter(Boolean); const trackerString = trackers.map(tr => `&tr=${encodeURIComponent(tr.trim())}`).join(""); if (trackerString) addLog(`${trackers.length}개의 트래커를 각 마그넷에 추가합니다.`); for (const [index, magnet] of magnets.entries()) { addLog(`[${index + 1}/${magnets.length}] 마그넷 추가 시도 중...`); try { const finalMagnet = magnet + trackerString; const response = await makeApiCall("/torrents/addMagnet", { method: "POST", headers: { "Content-Type": "application/x-form-urlencoded" }, body: `magnet=${encodeURIComponent(finalMagnet)}` }); if (response && response.id) { const torrentId = response.id; addLog(`[${index + 1}/${magnets.length}] ID ${torrentId} 추가 성공. 파일 목록을 기다립니다...`); const readyForSelection = await waitForFileSelection(torrentId); if (readyForSelection) { addLog(`ID ${torrentId} 파일 선택을 시작합니다.`); await makeApiCall(`/torrents/selectFiles/${torrentId}`, { method: "POST", headers: { "Content-Type": "application/x-form-urlencoded" }, body: "files=all" }); addLog(`ID ${torrentId} 파일 선택 완료. 다운로드가 시작됩니다.`, "success"); } successCount++; } else { throw new Error("API 응답에서 토렌트 ID를 받지 못했습니다."); } } catch (e) { errorCount++; addLog(`[${index + 1}/${magnets.length}] 처리 중 오류 발생: ${e.message}`, "error"); } } if (successCount > 0) showToast(`총 ${successCount}개 항목의 다운로드를 성공적으로 시작했습니다.`, "success"); if (errorCount > 0) showToast(`${errorCount}개 항목 추가에 실패했습니다. 로그를 확인하세요.`, "error"); magnetInput.value = ""; magnetInput.dispatchEvent(new Event('blur')); setTimeout(() => startOrResetRefreshCycle(), 1500); } catch (error) { showToast(`업로드 중 오류 발생: ${error.message}`, "error"); } finally { setLoading(button, false); } }
+async function handleUnifiedUpload(button) { const magnetInput = document.getElementById("magnetInput"); const trackerInput = document.getElementById("trackerInput"); const magnets = magnetInput.value.trim().split('\n').map(line => line.trim()).filter(line => line.startsWith('magnet:?')); if (magnets.length === 0) { showToast("추가할 유효한 마그넷 링크가 없습니다.", "warning"); return; } setLoading(button, true); let successCount = 0; let errorCount = 0; addLog(`총 ${magnets.length}개의 마그넷 처리를 시작합니다.`); try { const trackers = trackerInput.value.trim().split("\n").filter(Boolean); const trackerString = trackers.map(tr => `&tr=${encodeURIComponent(tr.trim())}`).join(""); if (trackerString) addLog(`${trackers.length}개의 트래커를 각 마그넷에 추가합니다.`); for (const [index, magnet] of magnets.entries()) { addLog(`[${index + 1}/${magnets.length}] 마그넷 추가 시도 중...`); try { const finalMagnet = magnet + trackerString; const response = await makeApiCall("/torrents/addMagnet", { method: "POST", headers: { "Content-Type": "application/x-form-urlencoded" }, body: `magnet=${encodeURIComponent(finalMagnet)}` }); if (response && response.id) { const torrentId = response.id; addLog(`[${index + 1}/${magnets.length}] ID ${torrentId} 추가 성공. 파일 목록을 기다립니다...`); const readyForSelection = await waitForAndSelectFiles(torrentId); successCount++; } else { throw new Error("API 응답에서 토렌트 ID를 받지 못했습니다."); } } catch (e) { errorCount++; addLog(`[${index + 1}/${magnets.length}] 처리 중 오류 발생: ${e.message}`, "error"); } } if (successCount > 0) showToast(`총 ${successCount}개 항목의 다운로드를 성공적으로 시작했습니다.`, "success"); if (errorCount > 0) showToast(`${errorCount}개 항목 추가에 실패했습니다. 로그를 확인하세요.`, "error"); magnetInput.value = ""; magnetInput.dispatchEvent(new Event('blur')); setTimeout(() => startOrResetRefreshCycle(), 1500); } catch (error) { showToast(`업로드 중 오류 발생: ${error.message}`, "error"); } finally { setLoading(button, false); } }
 async function refreshTorrents(){ try{ addLog("토렌트 목록을 불러오는 중..."); const torrents = await makeApiCall("/torrents?limit=1000"); const totalBytes = torrents.reduce((sum, torrent) => sum + torrent.bytes, 0); document.getElementById('apiListSize').innerHTML = `📚 ${formatSize(totalBytes)}`; displayTorrents(torrents); } catch(e) { showToast("토렌트 목록 로드 실패: "+e.message,"error"); document.getElementById("torrentList").innerHTML=`<p class="text-red-500 text-center py-8">${e.message}</p>`; } }
 function hideTorrentFromList(buttonElement) { const torrentItem = buttonElement.closest('.torrent-item'); if (torrentItem) { torrentItem.style.display = 'none'; addLog("항목을 현재 목록에서 숨겼습니다.", "info"); showToast("목록에서 숨김 처리되었습니다.", "info"); } }
 async function deleteTorrent(id, buttonElement) { if (!confirm("이 토렌트를 Real-Debrid 계정에서 영구적으로 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) return; const torrentItem = buttonElement.closest('.torrent-item'); setLoading(buttonElement, true); try { await makeApiCall(`/torrents/delete/${id}`, { method: "DELETE" }); showToast("토렌트가 RD 계정에서 삭제되었습니다", "success"); addLog(`ID ${id}: RD 계정에서 영구적으로 삭제되었습니다.`, 'success'); if (torrentItem) torrentItem.remove(); } catch (e) { showToast("삭제 실패: " + e.message, "error"); addLog(`ID ${id} 삭제 실패: ${e.message}`, 'error'); setLoading(buttonElement, false); } }
