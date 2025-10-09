@@ -4,61 +4,27 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>🚀 RDMex</title>
-    <!-- ★★★★★ Favicon 수정: Emoji 직접 사용 ★★★★★ -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
     
-    <!-- Content Security Policy -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap:; connect-src 'self' https://api.real-debrid.com https://raw.githubusercontent.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
     
-    <!-- External Stylesheets -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
     
-    <!-- Custom Styles -->
     <style>
-        /* Custom Styles for Toast and Animations */
-        #toastContainer {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            width: 90%;
-            max-width: 500px;
-        }
-        .fade-in {
-            animation: fadeIn 0.3s ease-out forwards;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        /* Custom scrollbar for better aesthetics */
-        #statusLog::-webkit-scrollbar, #torrentList::-webkit-scrollbar, #file-list-container::-webkit-scrollbar {
-            width: 8px;
-        }
-        #statusLog::-webkit-scrollbar-thumb, #torrentList::-webkit-scrollbar-thumb, #file-list-container::-webkit-scrollbar-thumb {
-            background-color: #a0aec0;
-            border-radius: 4px;
-        }
-        #statusLog::-webkit-scrollbar-track, #torrentList::-webkit-scrollbar-track, #file-list-container::-webkit-scrollbar-track {
-            background-color: #edf2f7;
-        }
-        /* Style adjustments for better button feedback */
-        .btn-potplayer { background-color: #4b3279; color: white; }
-        .btn-potplayer:hover { background-color: #5d3f99; }
-        .btn-stream { background-color: #8B5CF6; color: white; }
-        .btn-stream:hover { background-color: #7C3AED; }
-        .btn-rdpage { background-color: #3B82F6; color: white; }
-        .btn-rdpage:hover { background-color: #2563EB; }
-        .btn-download { background-color: #10B981; color: white; }
-        .btn-download:hover { background-color: #059669; }
-        .btn-link { background-color: #6B7280; color: white; }
-        .btn-link:hover { background-color: #4B5563; }
-        .btn-hide { background-color: #9CA3AF; color: white; }
-        .btn-hide:hover { background-color: #6B7280; }
-        .btn-delete { background-color: #EF4444; color: white; }
-        .btn-delete:hover { background-color: #DC2626; }
+        #toastContainer { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 90%; max-width: 500px; }
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        #statusLog::-webkit-scrollbar, #torrentList::-webkit-scrollbar, #file-list-container::-webkit-scrollbar { width: 8px; }
+        #statusLog::-webkit-scrollbar-thumb, #torrentList::-webkit-scrollbar-thumb, #file-list-container::-webkit-scrollbar-thumb { background-color: #a0aec0; border-radius: 4px; }
+        #statusLog::-webkit-scrollbar-track, #torrentList::-webkit-scrollbar-track, #file-list-container::-webkit-scrollbar-track { background-color: #edf2f7; }
+        .btn-potplayer { background-color: #4b3279; color: white; } .btn-potplayer:hover { background-color: #5d3f99; }
+        .btn-stream { background-color: #8B5CF6; color: white; } .btn-stream:hover { background-color: #7C3AED; }
+        .btn-rdpage { background-color: #3B82F6; color: white; } .btn-rdpage:hover { background-color: #2563EB; }
+        .btn-download { background-color: #10B981; color: white; } .btn-download:hover { background-color: #059669; }
+        .btn-link { background-color: #6B7280; color: white; } .btn-link:hover { background-color: #4B5563; }
+        .btn-hide { background-color: #9CA3AF; color: white; } .btn-hide:hover { background-color: #6B7280; }
+        .btn-delete { background-color: #EF4444; color: white; } .btn-delete:hover { background-color: #DC2626; }
         .loading { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
@@ -76,7 +42,6 @@
       <!-- Input Section -->
       <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
         <div class="flex flex-col md:flex-row gap-6">
-            <!-- Magnet Input -->
             <div class="flex-1 flex relative h-32 md:h-auto">
                 <div id="magnetPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-opacity duration-300">
                     <i class="fas fa-magnet text-4xl text-gray-400"></i>
@@ -84,7 +49,6 @@
                 </div>
                 <textarea id="magnetInput" rows="2" class="w-full h-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-left bg-transparent z-10 md:min-h-[128px]"></textarea>
             </div>
-            <!-- Torrent File Input -->
             <div class="flex-1 flex h-32 md:h-auto">
                 <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center w-full h-full flex flex-col justify-center items-center relative cursor-pointer" id="dropZone">
                     <input type="file" id="torrentFile" accept=".torrent" class="hidden" />
@@ -95,8 +59,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- 2-Button Upload Layout -->
         <div class="flex flex-col md:flex-row gap-4 mt-6">
             <button onclick="handleConvertUpload(this)" id="convertUploadButton" class="w-full px-4 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-200 flex items-center justify-center text-xl flex-1">
                 <i class="fas fa-magnet mr-3"></i> 마그넷 / 변환 업로드
@@ -105,8 +67,6 @@
                 <i class="fas fa-file-arrow-up mr-3"></i> 파일 직접 업로드
             </button>
         </div>
-        
-        <!-- Tracker Section -->
         <div class="mt-6">
           <div class="flex justify-between items-center mb-1">
             <label for="trackerInput" class="block text-sm font-medium text-gray-700 flex items-center">
@@ -137,7 +97,7 @@
         <!-- Right Column: Status Log and API -->
         <div class="flex flex-col gap-8" style="height: 600px;">
           <!-- Log Container -->
-          <div class="bg-white rounded-lg shadow-lg p-6 flex-grow flex flex-col">
+          <div class="bg-white rounded-lg shadow-lg p-6 flex-grow flex flex-col min-h-0">
             <h2 class="text-xl font-semibold mb-4 flex items-center text-gray-800 border-b pb-3"><i class="fas fa-info-circle mr-2 text-blue-500"></i>상태 및 로그</h2>
             <div id="statusLog" class="bg-gray-50 rounded-lg p-3 flex-1 overflow-y-auto text-sm">
                 <p id="initialLogMessage" class="text-gray-500">준비 완료.</p>
@@ -149,15 +109,12 @@
                 <h2 class="text-xl font-semibold flex items-center text-gray-800"><i class="fas fa-key mr-2 text-yellow-500"></i>API 설정</h2>
                 <div id="apiCombinedStatus" class="ml-3 text-sm"></div>
             </div>
-            
-            <!-- ★★★★★ API 토큰 입력창 수정 ★★★★★ -->
             <div class="relative">
                 <input type="password" id="apiToken" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10" placeholder="Real-Debrid API 토큰을 입력하세요" />
                 <button id="toggleApiToken" onclick="toggleTokenVisibility()" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700">
                     <i id="toggleApiIcon" class="fas fa-eye"></i>
                 </button>
             </div>
-            
             <p class="text-xs text-gray-500 mt-2">API 토큰은 <a href="https://real-debrid.com/apitoken" target="_blank" class="text-blue-600 underline">real-debrid.com/apitoken</a> 에서 발급받을 수 있습니다.<br/><span class="text-red-500">연결 실패 시:</span> 토큰이 정확한지, 인터넷 연결, 브라우저 확장 프로그램(광고 차단 등)을 확인해주세요.</p>
             <div class="flex gap-4 mt-4">
                 <button onclick="saveToken()" class="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700"><i class="fas fa-save mr-2"></i>저장</button>
@@ -180,7 +137,7 @@
     <!-- Main Application Script -->
     <script src="app.js"></script>
     
-    <!-- ★★★★★ API 토큰 보이기/숨기기 스크립트 ★★★★★ -->
+    <!-- API Token Visibility Script -->
     <script>
         function toggleTokenVisibility() {
             const apiTokenInput = document.getElementById('apiToken');
