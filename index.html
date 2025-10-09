@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>RDMex</title>
-    <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+    <title>🚀 RDMex</title>
+    <!-- ★★★★★ Favicon 수정: Emoji 직접 사용 ★★★★★ -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
     
     <!-- Content Security Policy -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap:; connect-src 'self' https://api.real-debrid.com https://raw.githubusercontent.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
@@ -120,7 +120,7 @@
         </div>
       </div>
 
-      <!-- ★★★★★ Torrent List, Log, API Sections (레이아웃 수정됨) ★★★★★ -->
+      <!-- Torrent List, Log, API Sections -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Left Column: Torrent List -->
         <div class="bg-white rounded-lg shadow-lg relative" style="height: 600px;">
@@ -136,20 +136,28 @@
 
         <!-- Right Column: Status Log and API -->
         <div class="flex flex-col gap-8" style="height: 600px;">
-          <!-- Log Container: This will grow and its content will scroll -->
+          <!-- Log Container -->
           <div class="bg-white rounded-lg shadow-lg p-6 flex-grow flex flex-col">
             <h2 class="text-xl font-semibold mb-4 flex items-center text-gray-800 border-b pb-3"><i class="fas fa-info-circle mr-2 text-blue-500"></i>상태 및 로그</h2>
             <div id="statusLog" class="bg-gray-50 rounded-lg p-3 flex-1 overflow-y-auto text-sm">
                 <p id="initialLogMessage" class="text-gray-500">준비 완료.</p>
             </div>
           </div>
-          <!-- API Container: This will stay at the bottom with its natural height -->
+          <!-- API Container -->
           <div class="bg-white rounded-lg shadow-lg p-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold flex items-center text-gray-800"><i class="fas fa-key mr-2 text-yellow-500"></i>API 설정</h2>
                 <div id="apiCombinedStatus" class="ml-3 text-sm"></div>
             </div>
-            <input type="password" id="apiToken" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Real-Debrid API 토큰을 입력하세요" />
+            
+            <!-- ★★★★★ API 토큰 입력창 수정 ★★★★★ -->
+            <div class="relative">
+                <input type="password" id="apiToken" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10" placeholder="Real-Debrid API 토큰을 입력하세요" />
+                <button id="toggleApiToken" onclick="toggleTokenVisibility()" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700">
+                    <i id="toggleApiIcon" class="fas fa-eye"></i>
+                </button>
+            </div>
+            
             <p class="text-xs text-gray-500 mt-2">API 토큰은 <a href="https://real-debrid.com/apitoken" target="_blank" class="text-blue-600 underline">real-debrid.com/apitoken</a> 에서 발급받을 수 있습니다.<br/><span class="text-red-500">연결 실패 시:</span> 토큰이 정확한지, 인터넷 연결, 브라우저 확장 프로그램(광고 차단 등)을 확인해주세요.</p>
             <div class="flex gap-4 mt-4">
                 <button onclick="saveToken()" class="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700"><i class="fas fa-save mr-2"></i>저장</button>
@@ -171,5 +179,22 @@
     
     <!-- Main Application Script -->
     <script src="app.js"></script>
+    
+    <!-- ★★★★★ API 토큰 보이기/숨기기 스크립트 ★★★★★ -->
+    <script>
+        function toggleTokenVisibility() {
+            const apiTokenInput = document.getElementById('apiToken');
+            const toggleIcon = document.getElementById('toggleApiIcon');
+            if (apiTokenInput.type === 'password') {
+                apiTokenInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                apiTokenInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+    </script>
 </body>
 </html>
