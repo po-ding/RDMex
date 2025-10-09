@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>RDMex</title>
     <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
     
     <!-- Content Security Policy -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap:; connect-src 'self' https://api.real-debrid.com https://raw.githubusercontent.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
@@ -98,12 +98,9 @@
 
         <!-- 2-Button Upload Layout -->
         <div class="flex flex-col md:flex-row gap-4 mt-6">
-            <!-- Button 1: Magnet or Convert Upload -->
             <button onclick="handleConvertUpload(this)" id="convertUploadButton" class="w-full px-4 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-200 flex items-center justify-center text-xl flex-1">
                 <i class="fas fa-magnet mr-3"></i> 마그넷 / 변환 업로드
             </button>
-            
-            <!-- Button 2: Torrent File Direct Upload -->
             <button onclick="handleDirectUpload(this)" id="directUploadButton" class="w-full px-4 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition duration-200 flex items-center justify-center text-xl flex-1 opacity-50 cursor-not-allowed" disabled>
                 <i class="fas fa-file-arrow-up mr-3"></i> 파일 직접 업로드
             </button>
@@ -113,10 +110,7 @@
         <div class="mt-6">
           <div class="flex justify-between items-center mb-1">
             <label for="trackerInput" class="block text-sm font-medium text-gray-700 flex items-center">
-                <span class="cursor-pointer" onclick="fetchBestTrackers()">
-                    <i class="fas fa-satellite-dish mr-2 text-purple-500"></i>최신 트래커 불러오기
-                </span>
-                <span id="trackerStatusIcon" class="ml-2"></span>
+                <span class="cursor-pointer" onclick="fetchBestTrackers()"><i class="fas fa-satellite-dish mr-2 text-purple-500"></i>최신 트래커 불러오기</span><span id="trackerStatusIcon" class="ml-2"></span>
             </label>
             <div id="trackerUpdateTime" class="text-xs font-bold text-gray-500 ml-3 text-right"></div>
           </div>
@@ -126,10 +120,10 @@
         </div>
       </div>
 
-      <!-- Torrent List, Log, API Sections -->
+      <!-- ★★★★★ Torrent List, Log, API Sections (레이아웃 수정됨) ★★★★★ -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Left Column: Torrent List -->
-        <div class="bg-white rounded-lg shadow-lg relative" style="height: 600px">
+        <div class="bg-white rounded-lg shadow-lg relative" style="height: 600px;">
           <div class="absolute top-0 left-0 right-0 p-4 h-16 border-b border-gray-200 flex justify-between items-center">
               <h2 class="text-xl font-semibold text-gray-800"><i class="fas fa-list mr-2 text-blue-500"></i>토렌트 목록</h2>
               <div class="flex gap-2">
@@ -141,13 +135,15 @@
         </div>
 
         <!-- Right Column: Status Log and API -->
-        <div class="flex flex-col gap-8">
+        <div class="flex flex-col gap-8" style="height: 600px;">
+          <!-- Log Container: This will grow and its content will scroll -->
           <div class="bg-white rounded-lg shadow-lg p-6 flex-grow flex flex-col">
             <h2 class="text-xl font-semibold mb-4 flex items-center text-gray-800 border-b pb-3"><i class="fas fa-info-circle mr-2 text-blue-500"></i>상태 및 로그</h2>
             <div id="statusLog" class="bg-gray-50 rounded-lg p-3 flex-1 overflow-y-auto text-sm">
                 <p id="initialLogMessage" class="text-gray-500">준비 완료.</p>
             </div>
           </div>
+          <!-- API Container: This will stay at the bottom with its natural height -->
           <div class="bg-white rounded-lg shadow-lg p-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold flex items-center text-gray-800"><i class="fas fa-key mr-2 text-yellow-500"></i>API 설정</h2>
@@ -167,7 +163,7 @@
     <!-- Toast Message Container -->
     <div id="toastContainer"></div>
 
-    <!-- ★★★★★ Local Scripts Loading Section ★★★★★ -->
+    <!-- Local Scripts Loading Section -->
     <script src="cordova.js"></script>
     <script src="sha1.js"></script>
     <script src="bencode.js"></script>
