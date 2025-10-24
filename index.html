@@ -85,6 +85,45 @@
             </div>
             <div id="torrentList" class="p-2" style="min-height: 600px; max-height: 80vh; overflow-y: auto;">
                 <p class="text-gray-500 text-center py-8">토렌트 목록을 불러오려면 새로고침 버튼을 클릭하세요.</p>
+
+                <!-- 
+                  [ 개발자 참고 ]
+                  app.js에서 각 토렌트 항목을 생성할 때 아래와 같은 구조를 사용해주세요.
+                  날짜와 시간 정보를 아래 예시처럼 하나의 div 혹은 span 태그로 묶어야 한 줄로 표시됩니다.
+                -->
+                <!--
+                <div class="border-b py-3 px-2">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-semibold text-gray-800 text-sm break-all pr-2">신발 벗고 돌싱포맨.E205.251021.1080p.H264-F1RST.mp4</h3>
+                        <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full whitespace-nowrap">완료</span>
+                    </div>
+
+                    <div class="flex justify-between items-center text-xs text-gray-500 mb-2">
+                        <div class="flex items-center gap-x-4">
+                            <span><i class="fas fa-hdd mr-1"></i>1.43 GB</span>
+                            <span><i class="fas fa-arrow-down mr-1"></i>0 B/s</span>
+                        </div>
+                        <div class="text-right flex items-center whitespace-nowrap">
+                            <i class="fas fa-clock mr-1.5"></i>
+                            <span>2025. 10. 24. 오후 6:06:41</span>
+                        </div>
+                    </div>
+
+                    <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                        <div class="bg-blue-600 h-2 rounded-full" style="width: 100%"></div>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-1.5">
+                        <button class="btn-potplayer px-2.5 py-1.5 rounded text-xs"><i class="fas fa-play"></i></button>
+                        <button class="btn-stream px-2.5 py-1.5 rounded text-xs"><i class="fas fa-desktop"></i></button>
+                        <button class="btn-rdpage px-2.5 py-1.5 rounded text-xs"><i class="fas fa-external-link-alt"></i></button>
+                        <button class="btn-download px-2.5 py-1.5 rounded text-xs"><i class="fas fa-download"></i></button>
+                        <button class="btn-link px-2.5 py-1.5 rounded text-xs"><i class="fas fa-link"></i></button>
+                        <button class="btn-hide px-2.5 py-1.5 rounded text-xs"><i class="fas fa-eye-slash"></i></button>
+                        <button class="btn-delete px-2.5 py-1.5 rounded text-xs"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                -->
             </div>
         </div>
 
