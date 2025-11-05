@@ -1,5 +1,5 @@
 // ============== folder-view.js ==============
-// (Persistent Virtual Folders Edition - UI/UX Improved)
+// (Persistent Virtual Folders Edition - Final Version with all fixes and features)
 
 /**
  * 새 창을 열고, 그 안에 모든 UI와 로직(저장, 불러오기 등)을 주입합니다.
@@ -40,27 +40,22 @@ function openFolderViewInNewWindow() {
                 .btn-delete { background-color: #EF4444; color: white; } .btn-delete:hover { background-color: #DC2626; }
                 details summary::-webkit-details-marker { display: none; }
                 details > summary { list-style: none; }
-                /* ★★★ [수정됨] 스크롤 따라다니는 버튼을 하단 중앙에 위치 ★★★ */
-                .sticky-controls-wrapper {
-                    position: sticky;
-                    bottom: 1rem;
+                /* ★★★ [수정됨] 버튼을 화면 우측 중간에 고정 ★★★ */
+                .fixed-controls {
+                    position: fixed;
+                    top: 50%;
+                    right: 1.5rem;
+                    transform: translateY(-50%);
                     z-index: 50;
                     display: flex;
-                    justify-content: center; /* 중앙 정렬 */
-                }
-                .sticky-controls {
-                    display: flex;
+                    flex-direction: column;
                     align-items: center;
-                    padding: 0.75rem;
-                    background-color: rgba(255, 255, 255, 0.85);
-                    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                    border-radius: 0.75rem; /* 더 둥글게 */
-                    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+                    gap: 0.75rem;
                 }
             </style>
         </head>
         <body>
-            <div class="container mx-auto max-w-5xl p-4 pb-32"> <!-- 하단 여백 추가 -->
+            <div class="container mx-auto max-w-5xl p-4 pb-32">
                 <div class="flex justify-between items-center mb-4 border-b pb-2">
                     <h1 class="text-2xl font-bold text-gray-800">토렌트 가상 폴더 뷰 (${lastFetchedTorrents.length}개)</h1>
                     <div class="flex gap-2 items-center">
@@ -75,20 +70,16 @@ function openFolderViewInNewWindow() {
                 <div id="folderViewContainer">${initialViewHTML}</div>
             </div>
 
-            <!-- ★★★ [수정됨] 스크롤 따라다니는 버튼 컨테이너 구조 변경 ★★★ -->
-            <div class="sticky-controls-wrapper">
-                <div class="sticky-controls">
-                     <button id="createFolderBtn" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 flex items-center shadow-lg" title="선택한 항목으로 가상 폴더 만들기">
-                        <i class="fas fa-folder-plus mr-2"></i>가상 폴더 만들기
-                    </button>
-                    <button id="cancelFolderBtn" class="ml-3 px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg hover:bg-gray-600 hidden shadow-lg" title="취소">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
+            <div class="fixed-controls">
+                 <button id="createFolderBtn" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 flex items-center shadow-lg transition-transform hover:scale-105" title="선택한 항목으로 가상 폴더 만들기">
+                    <i class="fas fa-folder-plus mr-2"></i>가상 폴더 만들기
+                </button>
+                <button id="cancelFolderBtn" class="px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg hover:bg-gray-600 hidden shadow-lg" title="취소">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
 
             <script>
-                // ... (새 창 내부 스크립트는 이전과 동일)
                 let isFolderCreationMode = false;
                 let hasUnsavedChanges = false;
                 const LAYOUT_STORAGE_KEY = 'rdmex_virtual_folder_layout';
@@ -104,8 +95,8 @@ function openFolderViewInNewWindow() {
                 function saveLayout() {
                     const container = document.getElementById('folderViewContainer');
                     const layout = [];
-                    container.childNodes.forEach(node => {
-                        if (node.nodeType !== Node.ELEMENT_NODE) return;
+                    // ★★★ [수정됨] childNodes 대신 children을 사용하여 오류 방지 ★★★
+                    for (const node of container.children) {
                         if (node.tagName === 'DETAILS') {
                             const folder = {
                                 type: 'folder',
@@ -116,30 +107,36 @@ function openFolderViewInNewWindow() {
                         } else if (node.classList.contains('torrent-item-container')) {
                             layout.push({ type: 'single', id: node.dataset.id });
                         }
-                    });
+                    }
+
                     localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(layout));
                     hasUnsavedChanges = false;
-                    opener.showToast("폴더 구조가 브라우저에 저장되었습니다.", "success"); // ★★★ 알림 메시지
+                    opener.showToast("폴더 구조가 브라우저에 저장되었습니다.", "success");
                 }
 
                 function loadLayout() {
                     if (hasUnsavedChanges && !confirm("저장되지 않은 변경사항이 있습니다. 정말로 불러오시겠습니까?")) return;
+
                     const savedLayoutJSON = localStorage.getItem(LAYOUT_STORAGE_KEY);
                     if (!savedLayoutJSON) {
                         opener.showToast("저장된 폴더 구조가 없습니다.", "info");
                         return;
                     }
+
                     const savedLayout = JSON.parse(savedLayoutJSON);
                     const container = document.getElementById('folderViewContainer');
                     container.innerHTML = '';
+
                     const torrentsMap = new Map(opener.lastFetchedTorrents.map(t => [t.id, t]));
                     const usedIds = new Set();
+
                     savedLayout.forEach(entry => {
                         if (entry.type === 'folder') {
                             const folderContent = document.createElement('div');
                             folderContent.className = 'p-2 border-t border-gray-300';
                             let totalSize = 0;
                             let liveItemsCount = 0;
+
                             entry.items.forEach(id => {
                                 if (torrentsMap.has(id)) {
                                     const torrent = torrentsMap.get(id);
@@ -149,6 +146,7 @@ function openFolderViewInNewWindow() {
                                     usedIds.add(id);
                                 }
                             });
+
                             if (liveItemsCount > 0) {
                                 const details = document.createElement('details');
                                 details.className = 'bg-gray-100 rounded-lg mb-2';
@@ -164,16 +162,12 @@ function openFolderViewInNewWindow() {
                             usedIds.add(entry.id);
                         }
                     });
+                    
                     const uncategorizedItems = opener.lastFetchedTorrents.filter(t => !usedIds.has(t.id));
                     if (uncategorizedItems.length > 0) {
-                        const uncategorizedHeader = document.createElement('h2');
-                        uncategorizedHeader.className = 'text-lg font-semibold text-gray-600 mt-6 mb-2 border-b pb-1';
-                        uncategorizedHeader.textContent = '분류되지 않은 항목';
-                        container.appendChild(uncategorizedHeader);
-                        uncategorizedItems.forEach(t => {
-                            container.innerHTML += opener.renderTorrentItemHTML(t, true);
-                        });
+                         container.innerHTML += opener.generateMonthlyGroupHTML(uncategorizedItems, true);
                     }
+                    
                     hasUnsavedChanges = false;
                     opener.showToast("저장된 폴더 구조를 불러왔습니다.", "success");
                 }
@@ -235,10 +229,6 @@ function openFolderViewInNewWindow() {
                     else toggleFolderCreationMode();
                 });
                 document.getElementById('cancelFolderBtn').addEventListener('click', toggleFolderCreationMode);
-                
-                document.addEventListener('DOMContentLoaded', () => {
-                     document.getElementById('folderViewContainer').innerHTML = opener.generateAutomaticFolderViewHTML(opener.lastFetchedTorrents);
-                });
             <\/script>
         </body>
         </html>
@@ -248,11 +238,7 @@ function openFolderViewInNewWindow() {
     newWindow.document.close();
 }
 
-/**
- * 개별 토렌트 항목 HTML 생성
- */
 function renderTorrentItemHTML(t, isNewWindow = false) {
-    // ... (이 함수는 변경 사항 없음, 이전 답변과 동일)
     const onclickPrefix = isNewWindow ? "window.opener." : "";
     const buttonClasses = "w-9 h-9 flex items-center justify-center text-base rounded-lg";
     let potplayerButtonHTML = `<button class="${buttonClasses} btn-potplayer" title="PC 팟플레이어로 재생" onclick="${onclickPrefix}playInPotplayer('${t.id}', this)"><i class="fas fa-play"></i></button>`;
@@ -290,10 +276,40 @@ function renderTorrentItemHTML(t, isNewWindow = false) {
 }
 
 /**
- * 자동 그룹화된 폴더 뷰 HTML 생성
+ * ★★★ [신규] 월별 그룹 HTML을 생성하는 재사용 가능한 함수
+ */
+function generateMonthlyGroupHTML(items, isNewWindow) {
+    if (!items || items.length === 0) return '';
+    
+    const monthlyGroups = {};
+    items.forEach(item => {
+        const date = new Date(item.added);
+        const key = \`${date.getFullYear()}-\${(date.getMonth() + 1).toString().padStart(2, '0')}\`; // "YYYY-MM"
+        if (!monthlyGroups[key]) monthlyGroups[key] = [];
+        monthlyGroups[key].push(item);
+    });
+
+    let monthlyHTML = '';
+    Object.keys(monthlyGroups).sort().reverse().forEach(key => {
+        const [year, month] = key.split('-');
+        const itemsInMonth = monthlyGroups[key];
+        const totalSize = itemsInMonth.reduce((sum, item) => sum + item.bytes, 0);
+        monthlyHTML += \`<details class="bg-gray-100 rounded-lg mb-2">
+            <summary class="p-3 cursor-pointer font-semibold text-gray-800 flex justify-between items-center hover:bg-gray-200 rounded-t-lg">
+                <div><i class="fas fa-calendar-alt text-blue-500 mr-3"></i>\${year}년 \${parseInt(month, 10)}월</div>
+                <div class="text-sm font-normal text-gray-600">\${itemsInMonth.length}개 / \${formatSize(totalSize)}</div>
+            </summary>
+            <div class="p-2 border-t border-gray-300">\${itemsInMonth.map(t => renderTorrentItemHTML(t, isNewWindow)).join('')}</div>
+        </details>\`;
+    });
+    return monthlyHTML;
+}
+
+
+/**
+ * 자동 그룹화된 폴더 뷰 HTML 생성 (월별 그룹화 포함)
  */
 function generateAutomaticFolderViewHTML(torrents) {
-    // ... (이 함수는 변경 사항 없음, 이전 답변과 동일)
     const getGroupKey = (filename) => {
         let cleanName = filename.replace(/[._]/g, ' ');
         const patterns = [/S\d{1,2}E\d{1,3}/i, /E\d{1,3}/i, /\d{1,3}회/, /\d{1,3}화/, /\d{4}p/, /\b(19|20)\d{2}\b/, /BluRay|WEBRip|HDTV|x264|H264|x265|HEVC/i];
@@ -313,6 +329,7 @@ function generateAutomaticFolderViewHTML(torrents) {
         }
         return title.replace(/[-]/g, ' ').trim();
     };
+
     const groups = {};
     const singles = [];
     torrents.forEach(t => {
@@ -324,25 +341,26 @@ function generateAutomaticFolderViewHTML(torrents) {
             singles.push(t);
         }
     });
+
     let html = '';
     Object.keys(groups).sort().forEach(key => {
         const items = groups[key];
         if (items.length > 1) {
             const totalSize = items.reduce((sum, item) => sum + item.bytes, 0);
-            html += `<details class="bg-gray-100 rounded-lg mb-2">
+            html += \`<details class="bg-gray-100 rounded-lg mb-2">
                 <summary class="p-3 cursor-pointer font-semibold text-gray-800 flex justify-between items-center hover:bg-gray-200 rounded-t-lg">
-                    <div><i class="fas fa-folder text-yellow-500 mr-3"></i>${key}</div>
-                    <div class="text-sm font-normal text-gray-600">${items.length}개 / ${formatSize(totalSize)}</div>
+                    <div><i class="fas fa-folder text-yellow-500 mr-3"></i>\${key}</div>
+                    <div class="text-sm font-normal text-gray-600">\${items.length}개 / \${formatSize(totalSize)}</div>
                 </summary>
-                <div class="p-2 border-t border-gray-300">${items.map(t => renderTorrentItemHTML(t, true)).join('')}</div>
-            </details>`;
+                <div class="p-2 border-t border-gray-300">\${items.map(t => renderTorrentItemHTML(t, true)).join('')}</div>
+            </details>\`;
         } else {
             singles.push(...items);
         }
     });
-    singles.sort((a,b) => a.filename.localeCompare(b.filename));
-    singles.forEach(t => {
-        html += renderTorrentItemHTML(t, true);
-    });
+    
+    // ★★★ [수정됨] 단일 항목들을 월별로 그룹화하여 HTML에 추가
+    html += generateMonthlyGroupHTML(singles, true);
+
     return html;
 }
