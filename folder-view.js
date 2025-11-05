@@ -1,5 +1,5 @@
 // ============== folder-view.js ==============
-// (Persistent Virtual Folders Edition - Final Version with all fixes and features)
+// (Persistent Virtual Folders Edition - Final Version with Button Fix)
 
 /**
  * 새 창을 열고, 그 안에 모든 UI와 로직(저장, 불러오기 등)을 주입합니다.
@@ -18,6 +18,7 @@ function openFolderViewInNewWindow() {
         return;
     }
 
+    // ★★★ [수정됨] 새 창에 전달할 때, 부모 창의 함수를 직접 참조하지 않고 HTML만 생성합니다.
     const initialViewHTML = generateAutomaticFolderViewHTML(lastFetchedTorrents, true);
 
     const newWindowContent = `
@@ -41,15 +42,8 @@ function openFolderViewInNewWindow() {
                 details summary::-webkit-details-marker { display: none; }
                 details > summary { list-style: none; }
                 .fixed-controls {
-                    position: fixed;
-                    top: 50%;
-                    right: 1.5rem;
-                    transform: translateY(-50%);
-                    z-index: 50;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 0.75rem;
+                    position: fixed; top: 50%; right: 1.5rem; transform: translateY(-50%);
+                    z-index: 50; display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
                 }
             </style>
         </head>
@@ -247,7 +241,6 @@ function generateMonthlyGroupHTML(items, isNewWindow) {
         const [year, month] = key.split('-');
         const itemsInMonth = monthlyGroups[key];
         const totalSize = itemsInMonth.reduce((sum, item) => sum + item.bytes, 0);
-        // ★★★ [수정됨] isNewWindow 파라미터를 renderTorrentItemHTML에 전달
         monthlyHTML += `<details class="bg-gray-100 rounded-lg mb-2">
             <summary class="p-3 cursor-pointer font-semibold text-gray-800 flex justify-between items-center hover:bg-gray-200 rounded-t-lg">
                 <div><i class="fas fa-calendar-alt text-blue-500 mr-3"></i>${year}년 ${parseInt(month, 10)}월</div>
@@ -258,6 +251,7 @@ function generateMonthlyGroupHTML(items, isNewWindow) {
     });
     return monthlyHTML;
 }
+
 
 /**
  * 자동 그룹화된 폴더 뷰 HTML 생성 (월별 그룹화 포함)
@@ -300,7 +294,6 @@ function generateAutomaticFolderViewHTML(torrents, isNewWindow) {
         const items = groups[key];
         if (items.length > 1) {
             const totalSize = items.reduce((sum, item) => sum + item.bytes, 0);
-            // ★★★ [수정됨] details 태그에 open 속성 제거 (기본 닫힘)
             html += `<details class="bg-gray-100 rounded-lg mb-2">
                 <summary class="p-3 cursor-pointer font-semibold text-gray-800 flex justify-between items-center hover:bg-gray-200 rounded-t-lg">
                     <div><i class="fas fa-folder text-yellow-500 mr-3"></i>${key}</div>
