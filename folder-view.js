@@ -1,40 +1,8 @@
 // ============== folder-view.js ==============
-// 폴더 뷰/리스트 뷰 전환 및 렌더링 스크립트
+// 토렌트 목록 렌더링 및 폴더 뷰 HTML 생성 스크립트
 
-// 전역 변수: 현재 보기 모드와 마지막으로 불러온 토렌트 목록
-let currentViewMode = 'list';
+// 전역 변수: 마지막으로 불러온 토렌트 목록 (app.js와 공유)
 let lastFetchedTorrents = [];
-
-/**
- * 보기 모드를 'list'와 'tree' 간에 전환하고, 아이콘을 업데이트한 후 목록을 다시 렌더링합니다.
- */
-function toggleTorrentView() {
-    currentViewMode = currentViewMode === 'list' ? 'tree' : 'list';
-    const iconEl = document.getElementById('viewModeIcon');
-    const icon = iconEl.querySelector('i');
-    
-    if (currentViewMode === 'tree') {
-        icon.classList.remove('fa-folder');
-        icon.classList.add('fa-list');
-        iconEl.title = "리스트 뷰로 전환";
-    } else {
-        icon.classList.remove('fa-list');
-        icon.classList.add('fa-folder');
-        iconEl.title = "폴더 뷰로 전환";
-    }
-    renderTorrents(); // 보기 모드에 맞게 다시 렌더링
-}
-
-/**
- * 현재 보기 모드에 따라 적절한 렌더링 함수를 호출합니다.
- */
-function renderTorrents() {
-    if (currentViewMode === 'tree') {
-        displayTorrentsAsTree(lastFetchedTorrents);
-    } else {
-        displayTorrentsAsList(lastFetchedTorrents);
-    }
-}
 
 /**
  * 개별 토렌트 항목의 전체 HTML 코드를 생성합니다.
@@ -53,7 +21,9 @@ function renderTorrentItemHTML(t) {
 
     const formattedDate = new Date(t.added).toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
 
-    return `<div class="torrent-item border-b border-gray-200 p-3 hover:bg-gray-200 transition duration-200"> 
+    // 새 창에서는 this 컨텍스트가 달라지므로, window.opener를 통해 원래 창의 함수를 호출하도록 수정합니다.
+    const onclickPrefix = "window.opener.";
+    const itemHTML = `<div class="torrent-item border-b border-gray-200 p-3 hover:bg-gray-200 transition duration-200"> 
         <div class="flex justify-between items-start mb-2"> 
             <h3 class="font-semibold text-gray-800 flex-1 mr-4 overflow-hidden text-ellipsis whitespace-nowrap min-w-0" title="${t.filename}">${t.filename || "Unknown"}</h3> 
             <span class="px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${getStatusClass(t.status)}">${getStatusText(t.status)}</span> 
@@ -67,48 +37,45 @@ function renderTorrentItemHTML(t) {
         </div>
         ${t.progress >= 0 ? `<div class="w-full bg-gray-300 rounded-full h-2.5 mb-3"><div class="${progressBarColor} h-2.5 rounded-full" style="width: ${t.progress}%"></div></div>` : ""} 
         <div class="flex justify-between items-center mt-2"> 
-            <div>${t.status === "waiting_files_selection" ? `<button onclick="selectFiles('${t.id}')" class="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700"><i class="fas fa-check-square mr-1"></i>파일 선택</button>` : ""}</div> 
-            <div class="flex gap-2 flex-wrap items-center"> ${t.status === "downloaded" ? downloadedPrefixActions + commonActions : commonActions} </div> 
+            <div>${t.status === "waiting_files_selection" ? `<button onclick="${onclickPrefix}selectFiles('${t.id}')" class="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700"><i class="fas fa-check-square mr-1"></i>파일 선택</button>` : ""}</div> 
+            <div class="flex gap-2 flex-wrap items-center"> ${t.status === "downloaded" ? downloadedPrefixActions.replace(/onclick="/g, `onclick="${onclickPrefix}`) + commonActions.replace(/onclick="/g, `onclick="${onclickPrefix}`) : commonActions.replace(/onclick="/g, `onclick="${onclickPrefix}`)} </div> 
         </div> 
     </div>`;
+    return itemHTML;
 }
 
 /**
- * 토렌트 목록을 기본 리스트 형태로 표시합니다.
+ * 토렌트 목록을 기본 리스트 형태로 메인 창에 표시합니다.
  * @param {Array} torrents - 토렌트 객체 배열
  */
 function displayTorrentsAsList(torrents) {
     const listEl = document.getElementById("torrentList");
     if (torrents && torrents.length > 0) {
-        listEl.innerHTML = torrents.map(t => renderTorrentItemHTML(t)).join("");
+        // 새 창이 아닌 메인창의 함수를 호출하므로, window.opener 접두사가 없는 원본 HTML을 사용합니다.
+        listEl.innerHTML = torrents.map(t => renderTorrentItemHTML(t).replace(/window.opener./g, '')).join("");
     } else {
         listEl.innerHTML = '<p class="text-gray-500 text-center py-8">활성 토렌트가 없습니다.</p>';
     }
 }
 
 /**
- * 토렌트 목록을 파일 이름 기반으로 그룹화하여 폴더(트리) 형태로 표시합니다.
+ * 토렌트 목록을 그룹화하여 폴더 뷰 형태의 HTML 문자열을 생성하여 반환합니다.
  * @param {Array} torrents - 토렌트 객체 배열
+ * @returns {string} - 폴더 뷰의 HTML 문자열
  */
-function displayTorrentsAsTree(torrents) {
-    const listEl = document.getElementById("torrentList");
+function generateFolderViewHTML(torrents) {
     if (!torrents || torrents.length === 0) {
-        listEl.innerHTML = '<p class="text-gray-500 text-center py-8">활성 토렌트가 없습니다.</p>';
-        return;
+        return '<p class="text-gray-500 text-center py-8">표시할 토렌트가 없습니다.</p>';
     }
 
     const groups = {};
     const singles = [];
-
-    // 시리즈/시즌/년도/회차 패턴을 감지하는 정규식
     const seriesPattern = /(.+?)[. \t]+S(\d{1,2})E(\d{1,3})|(.+?)[. \t]+(\d{4})[. \t]+|(.+?)[. \t]+(\d{1,3})회/i;
 
     torrents.forEach(t => {
         const match = t.filename.match(seriesPattern);
         let groupKey = null;
-
         if (match) {
-            // 가장 연관성 높은 키를 찾습니다 (SxxExx > yyyy > xx회 순)
             const keyCandidates = [match[1], match[4], match[6]];
             const bestKey = keyCandidates.find(key => key !== undefined);
             if (bestKey) {
@@ -117,9 +84,7 @@ function displayTorrentsAsTree(torrents) {
         }
         
         if (groupKey) {
-            if (!groups[groupKey]) {
-                groups[groupKey] = [];
-            }
+            if (!groups[groupKey]) groups[groupKey] = [];
             groups[groupKey].push(t);
         } else {
             singles.push(t);
@@ -127,12 +92,11 @@ function displayTorrentsAsTree(torrents) {
     });
 
     let html = '';
-    // 2개 이상인 항목만 그룹으로 묶고, 나머지는 단일 항목으로 처리
     Object.keys(groups).sort().forEach(key => {
         const items = groups[key];
         if (items.length > 1) {
             const totalSize = items.reduce((sum, item) => sum + item.bytes, 0);
-            html += `<details class="bg-gray-100 rounded-lg mb-2">
+            html += `<details open class="bg-gray-100 rounded-lg mb-2">
                 <summary class="p-3 cursor-pointer font-semibold text-gray-800 flex justify-between items-center hover:bg-gray-200 rounded-t-lg">
                     <div><i class="fas fa-folder-open text-yellow-500 mr-3"></i>${key}</div>
                     <div class="text-sm font-normal text-gray-600">${items.length}개 / ${formatSize(totalSize)}</div>
@@ -140,15 +104,14 @@ function displayTorrentsAsTree(torrents) {
                 <div class="p-2 border-t border-gray-300">${items.map(t => renderTorrentItemHTML(t)).join('')}</div>
             </details>`;
         } else {
-            singles.push(...items); // 1개짜리 그룹은 단일 항목으로 편입
+            singles.push(...items);
         }
     });
 
-    // 단일 항목들을 이름순으로 정렬하여 렌더링
     singles.sort((a,b) => a.filename.localeCompare(b.filename));
     singles.forEach(t => {
         html += renderTorrentItemHTML(t);
     });
 
-    listEl.innerHTML = html;
+    return html;
 }
