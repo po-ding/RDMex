@@ -180,32 +180,18 @@ function displayTorrents(torrents) {
     const listEl = document.getElementById("torrentList"); 
     if (torrents && torrents.length > 0) { 
         listEl.innerHTML = torrents.map(t => { 
-            const buttonClasses = "w-9 h-9 flex items-center justify-center text-base rounded-lg";
-            // ★★★ '폴더 보기' 버튼에 대한 CSS 클래스 추가 ★★★
-            const btnFolderView = `bg-yellow-500 text-white hover:bg-yellow-600`;
-
+            const buttonClasses = "w-9 h-9 flex items-center justify-center text-base rounded-lg"; 
             let potplayerButtonHTML = ''; 
             if (isMobile()) { 
                 potplayerButtonHTML = `<button class="${buttonClasses} btn-link" title="새 탭에서 영상 열기" onclick="openVideoStream('${t.id}', this)"><i class="fas fa-video"></i></button>`; 
             } else { 
                 potplayerButtonHTML = `<button class="${buttonClasses} btn-potplayer" title="PC 팟플레이어로 재생" onclick="playInPotplayer('${t.id}', this)"><i class="fas fa-play"></i></button>`; 
             } 
-            
-            // ★★★ 공통 액션 버튼에 '폴더 보기' 버튼 추가 ★★★
-            const commonActions = `
-                <button class="${buttonClasses} ${btnFolderView}" title="폴더 구조로 보기" onclick="showFilesInFolderView('${t.id}', this)"><i class="fas fa-folder-open"></i></button>
-                <button class="${buttonClasses} btn-hide" title="목록에서 숨기기" onclick="hideTorrentFromList(this)"><i class="fas fa-eye-slash"></i></button> 
-                <button class="${buttonClasses} btn-delete" title="RD 계정에서 영구 삭제" onclick="deleteTorrent('${t.id}', this)"><i class="fas fa-trash"></i></button>`;
-            
-            const downloadedPrefixActions = `
-                ${potplayerButtonHTML} 
-                <button class="${buttonClasses} btn-stream" title="웹 브라우저로 스트리밍" onclick="streamFirstVideo('${t.id}', this)"><i class="fas fa-tv"></i></button> 
-                <button class="${buttonClasses} btn-rdpage" title="RD 페이지에서 보기" onclick="openRdDownloaderPage('${t.id}', this)"><i class="fas fa-external-link-alt"></i></button> 
-                <button class="${buttonClasses} btn-download" title="다운로드/링크 보기" onclick="getTorrentInfo('${t.id}', this)"><i class="fas fa-download"></i></button> 
-                <button class="${buttonClasses} btn-link" title="링크 복사 (파일 1개) / RD 페이지 열기 (2개 이상)" onclick="copyLinks('${t.id}', this)"><i class="fas fa-link"></i></button>`; 
-            
+            const commonActions = `<button class="${buttonClasses} btn-hide" title="목록에서 숨기기" onclick="hideTorrentFromList(this)"><i class="fas fa-eye-slash"></i></button> <button class="${buttonClasses} btn-delete" title="RD 계정에서 영구 삭제" onclick="deleteTorrent('${t.id}', this)"><i class="fas fa-trash"></i></button>`; 
+            const downloadedPrefixActions = potplayerButtonHTML + `<button class="${buttonClasses} btn-stream" title="웹 브라우저로 스트리밍" onclick="streamFirstVideo('${t.id}', this)"><i class="fas fa-tv"></i></button> <button class="${buttonClasses} btn-rdpage" title="RD 페이지에서 보기" onclick="openRdDownloaderPage('${t.id}', this)"><i class="fas fa-external-link-alt"></i></button> <button class="${buttonClasses} btn-download" title="다운로드/링크 보기" onclick="getTorrentInfo('${t.id}', this)"><i class="fas fa-download"></i></button> <button class="${buttonClasses} btn-link" title="링크 복사 (파일 1개) / RD 페이지 열기 (2개 이상)" onclick="copyLinks('${t.id}', this)"><i class="fas fa-link"></i></button>`; 
             const progressBarColor = 'bg-blue-600'; 
 
+            // ▼▼▼ 수정된 부분 ▼▼▼
             const formattedDate = new Date(t.added).toLocaleString('ko-KR', {
                 year: 'numeric',
                 month: '2-digit',
@@ -239,100 +225,11 @@ function displayTorrents(torrents) {
                     <div class="flex gap-2 flex-wrap items-center"> ${t.status === "downloaded" ? downloadedPrefixActions + commonActions : commonActions} </div> 
                 </div> 
             </div>`; 
+            // ▲▲▲ 수정 완료 ▲▲▲
         }).join(""); 
     } else { 
         listEl.innerHTML = '<p class="text-gray-500 text-center py-8">활성 토렌트가 없습니다.</p>'; 
     } 
-}
-
-// ★★★★★★ [신규 함수] 파일 목록을 새 창에 폴더 구조로 표시 ★★★★★★
-async function showFilesInFolderView(torrentId, button) {
-    setLoading(button, true);
-    addLog(`ID ${torrentId}: 파일 목록을 폴더 구조로 불러옵니다...`);
-
-    try {
-        const info = await makeApiCall(`/torrents/info/${torrentId}`);
-        if (!info || !info.files || info.files.length === 0) {
-            throw new Error("파일 목록을 가져올 수 없습니다.");
-        }
-
-        // 1. 파일 경로를 분석하여 트리 구조 생성
-        const fileTree = {};
-        info.files.forEach(file => {
-            let currentLevel = fileTree;
-            const pathParts = file.path.split('/');
-            pathParts.forEach((part, index) => {
-                if (index === pathParts.length - 1) {
-                    currentLevel[part] = file; // 파일 노드
-                } else {
-                    if (!currentLevel[part]) {
-                        currentLevel[part] = {}; // 폴더 노드
-                    }
-                    currentLevel = currentLevel[part];
-                }
-            });
-        });
-
-        // 2. 트리 구조를 HTML로 변환하는 재귀 함수
-        const createHtmlTree = (node) => {
-            let html = '<ul style="list-style-type: none; padding-left: 20px;">';
-            
-            // 폴더를 파일보다 먼저 정렬
-            const sortedKeys = Object.keys(node).sort((a, b) => {
-                const nodeAIsFile = !!node[a].bytes;
-                const nodeBIsFile = !!node[b].bytes;
-                if (!nodeAIsFile && nodeBIsFile) return -1;
-                if (nodeAIsFile && !nodeBIsFile) return 1;
-                return a.localeCompare(b);
-            });
-
-            for (const key of sortedKeys) {
-                const childNode = node[key];
-                if (childNode.bytes) { // 파일인 경우
-                    html += `<li style="margin: 4px 0;"><i class="fas fa-file" style="margin-right: 8px; color: #6B7280;"></i>${key} <span style="color: #9CA3AF;">(${formatSize(childNode.bytes)})</span></li>`;
-                } else { // 폴더인 경우
-                    html += `<li style="margin: 8px 0;"><details open><summary style="cursor: pointer; font-weight: bold;"><i class="fas fa-folder-open" style="margin-right: 8px; color: #FBBF24;"></i>${key}</summary>${createHtmlTree(childNode)}</details></li>`;
-                }
-            }
-            html += '</ul>';
-            return html;
-        };
-
-        const treeHtml = createHtmlTree(fileTree);
-
-        // 3. 새 창을 열고 HTML 콘텐츠 삽입
-        const newWindow = window.open("", "_blank");
-        newWindow.document.write(`
-            <!DOCTYPE html>
-            <html lang="ko">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>파일 목록: ${info.filename}</title>
-                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-                <style>
-                    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; padding: 20px; background-color: #f9fafb; color: #111827;}
-                    h1 { font-size: 1.5em; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 20px;}
-                    details summary::-webkit-details-marker { display: none; }
-                    details > summary { list-style: none; }
-                </style>
-            </head>
-            <body>
-                <h1>${info.filename}</h1>
-                <div>${treeHtml}</div>
-            </body>
-            </html>
-        `);
-        newWindow.document.close();
-        addLog(`ID ${torrentId}: 파일 목록을 새 창에 표시했습니다.`, "success");
-
-    } catch (error) {
-        const errorMessage = `폴더 보기 실패: ${error.message}`;
-        showToast(errorMessage, "error");
-        addLog(errorMessage, 'error');
-    } finally {
-        setLoading(button, false);
-    }
 }
 
 async function streamFirstVideo(torrentId, button) { setLoading(button, true); addLog(`ID ${torrentId}: 웹 스트리밍 링크를 찾습니다...`); try { const info = await makeApiCall(`/torrents/info/${torrentId}`); const videoExtensions = ['.mp4', '.mkv', '.avi', '.mov', '.wmv']; let firstVideoLink = null; let videoFileFound = null; if (info && info.files) { const videoFile = info.files.find(file => videoExtensions.some(ext => file.path.toLowerCase().endsWith(ext)) && file.selected === 1); if (videoFile) { firstVideoLink = info.links[videoFile.id - 1]; videoFileFound = videoFile; } } if (!firstVideoLink) { throw new Error("스트리밍 가능한 비디오 파일을 찾지 못했습니다."); } addLog(`ID ${torrentId}: '${videoFileFound.path}' 파일의 링크를 변환합니다.`); const unrestrictInfo = await makeApiCall(`/unrestrict/link`, { method: 'POST', headers: { 'Content-Type': 'application/x-form-urlencoded' }, body: `link=${encodeURIComponent(firstVideoLink)}` }); if (unrestrictInfo && unrestrictInfo.id) { const streamingUrl = `https://real-debrid.com/streaming-${unrestrictInfo.id}`; addLog(`ID ${torrentId}: 스트리밍 페이지를 엽니다: ${streamingUrl}`, 'success'); window.open(streamingUrl, '_blank'); } else { throw new Error("스트리밍 링크를 생성하지 못했습니다."); } } catch (error) { const errorMessage = `웹 스트리밍 실패: ${error.message}`; showToast(errorMessage, "error"); addLog(errorMessage, 'error'); } finally { setLoading(button, false); } }
