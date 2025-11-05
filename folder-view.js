@@ -18,7 +18,7 @@ function openFolderViewInNewWindow() {
         return;
     }
 
-    const initialViewHTML = generateAutomaticFolderViewHTML(lastFetchedTorrents);
+    const initialViewHTML = generateAutomaticFolderViewHTML(lastFetchedTorrents, true);
 
     const newWindowContent = `
         <!DOCTYPE html>
@@ -40,7 +40,6 @@ function openFolderViewInNewWindow() {
                 .btn-delete { background-color: #EF4444; color: white; } .btn-delete:hover { background-color: #DC2626; }
                 details summary::-webkit-details-marker { display: none; }
                 details > summary { list-style: none; }
-                /* ★★★ [수정됨] 버튼을 화면 우측 중간에 고정 ★★★ */
                 .fixed-controls {
                     position: fixed;
                     top: 50%;
@@ -95,7 +94,6 @@ function openFolderViewInNewWindow() {
                 function saveLayout() {
                     const container = document.getElementById('folderViewContainer');
                     const layout = [];
-                    // ★★★ [수정됨] childNodes 대신 children을 사용하여 오류 방지 ★★★
                     for (const node of container.children) {
                         if (node.tagName === 'DETAILS') {
                             const folder = {
@@ -108,7 +106,6 @@ function openFolderViewInNewWindow() {
                             layout.push({ type: 'single', id: node.dataset.id });
                         }
                     }
-
                     localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(layout));
                     hasUnsavedChanges = false;
                     opener.showToast("폴더 구조가 브라우저에 저장되었습니다.", "success");
@@ -116,17 +113,14 @@ function openFolderViewInNewWindow() {
 
                 function loadLayout() {
                     if (hasUnsavedChanges && !confirm("저장되지 않은 변경사항이 있습니다. 정말로 불러오시겠습니까?")) return;
-
                     const savedLayoutJSON = localStorage.getItem(LAYOUT_STORAGE_KEY);
                     if (!savedLayoutJSON) {
                         opener.showToast("저장된 폴더 구조가 없습니다.", "info");
                         return;
                     }
-
                     const savedLayout = JSON.parse(savedLayoutJSON);
                     const container = document.getElementById('folderViewContainer');
                     container.innerHTML = '';
-
                     const torrentsMap = new Map(opener.lastFetchedTorrents.map(t => [t.id, t]));
                     const usedIds = new Set();
 
@@ -136,7 +130,6 @@ function openFolderViewInNewWindow() {
                             folderContent.className = 'p-2 border-t border-gray-300';
                             let totalSize = 0;
                             let liveItemsCount = 0;
-
                             entry.items.forEach(id => {
                                 if (torrentsMap.has(id)) {
                                     const torrent = torrentsMap.get(id);
@@ -146,7 +139,6 @@ function openFolderViewInNewWindow() {
                                     usedIds.add(id);
                                 }
                             });
-
                             if (liveItemsCount > 0) {
                                 const details = document.createElement('details');
                                 details.className = 'bg-gray-100 rounded-lg mb-2';
@@ -162,12 +154,10 @@ function openFolderViewInNewWindow() {
                             usedIds.add(entry.id);
                         }
                     });
-                    
                     const uncategorizedItems = opener.lastFetchedTorrents.filter(t => !usedIds.has(t.id));
                     if (uncategorizedItems.length > 0) {
                          container.innerHTML += opener.generateMonthlyGroupHTML(uncategorizedItems, true);
                     }
-                    
                     hasUnsavedChanges = false;
                     opener.showToast("저장된 폴더 구조를 불러왔습니다.", "success");
                 }
@@ -238,45 +228,8 @@ function openFolderViewInNewWindow() {
     newWindow.document.close();
 }
 
-function renderTorrentItemHTML(t, isNewWindow = false) {
-    const onclickPrefix = isNewWindow ? "window.opener." : "";
-    const buttonClasses = "w-9 h-9 flex items-center justify-center text-base rounded-lg";
-    let potplayerButtonHTML = `<button class="${buttonClasses} btn-potplayer" title="PC 팟플레이어로 재생" onclick="${onclickPrefix}playInPotplayer('${t.id}', this)"><i class="fas fa-play"></i></button>`;
-    if (isMobile()) {
-        potplayerButtonHTML = `<button class="${buttonClasses} btn-link" title="새 탭에서 영상 열기" onclick="${onclickPrefix}openVideoStream('${t.id}', this)"><i class="fas fa-video"></i></button>`;
-    }
-    const commonActions = `<button class="${buttonClasses} btn-hide" title="목록에서 숨기기" onclick="${onclickPrefix}hideTorrentFromList(this)"><i class="fas fa-eye-slash"></i></button> <button class="${buttonClasses} btn-delete" title="RD 계정에서 영구 삭제" onclick="${onclickPrefix}deleteTorrent('${t.id}', this)"><i class="fas fa-trash"></i></button>`;
-    const downloadedPrefixActions = potplayerButtonHTML + `<button class="${buttonClasses} btn-stream" title="웹 브라우저로 스트리밍" onclick="${onclickPrefix}streamFirstVideo('${t.id}', this)"><i class="fas fa-tv"></i></button> <button class="${buttonClasses} btn-rdpage" title="RD 페이지에서 보기" onclick="${onclickPrefix}openRdDownloaderPage('${t.id}', this)"><i class="fas fa-external-link-alt"></i></button> <button class="${buttonClasses} btn-download" title="다운로드/링크 보기" onclick="${onclickPrefix}getTorrentInfo('${t.id}', this)"><i class="fas fa-download"></i></button> <button class="${buttonClasses} btn-link" title="링크 복사 (파일 1개) / RD 페이지 열기 (2개 이상)" onclick="${onclickPrefix}copyLinks('${t.id}', this)"><i class="fas fa-link"></i></button>`;
-    const progressBarColor = 'bg-blue-600';
-    const formattedDate = new Date(t.added).toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-
-    return `<div class="torrent-item-container" data-id="${t.id}" data-bytes="${t.bytes}">
-        <div class="torrent-item border-b border-gray-200 p-3 hover:bg-gray-200 transition duration-200 flex items-center">
-            <input type="checkbox" class="folder-checkbox hidden w-5 h-5 mr-4 cursor-pointer">
-            <div class="flex-grow">
-                <div class="flex justify-between items-start mb-2"> 
-                    <h3 class="font-semibold text-gray-800 flex-1 mr-4 overflow-hidden text-ellipsis whitespace-nowrap min-w-0" title="${t.filename}">${t.filename || "Unknown"}</h3> 
-                    <span class="px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${getStatusClass(t.status)}">${getStatusText(t.status)}</span> 
-                </div> 
-                <div class="flex justify-between items-center text-sm text-gray-600 mb-3">
-                    <div class="flex items-center gap-x-4">
-                        <span><i class="fas fa-hdd mr-1 text-gray-400"></i> ${formatSize(t.bytes)}</span>
-                        <span><i class="fas fa-arrow-down mr-1 text-green-500"></i> ${formatSize(t.speed || 0)}/s</span>
-                    </div>
-                    <div class="text-right whitespace-nowrap"><i class="fas fa-clock mr-1 text-gray-400"></i><span>${formattedDate}</span></div>
-                </div>
-                ${t.progress >= 0 ? `<div class="w-full bg-gray-300 rounded-full h-2.5 mb-3"><div class="${progressBarColor} h-2.5 rounded-full" style="width: ${t.progress}%"></div></div>` : ""} 
-                <div class="flex justify-between items-center mt-2"> 
-                    <div>${t.status === "waiting_files_selection" ? `<button onclick="${onclickPrefix}selectFiles('${t.id}')" class="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700"><i class="fas fa-check-square mr-1"></i>파일 선택</button>` : ""}</div> 
-                    <div class="flex gap-2 flex-wrap items-center"> ${t.status === "downloaded" ? downloadedPrefixActions + commonActions : commonActions} </div> 
-                </div>
-            </div>
-        </div>
-    </div>`;
-}
-
 /**
- * ★★★ [신규] 월별 그룹 HTML을 생성하는 재사용 가능한 함수
+ * 월별 그룹 HTML을 생성하는 재사용 가능한 함수
  */
 function generateMonthlyGroupHTML(items, isNewWindow) {
     if (!items || items.length === 0) return '';
@@ -284,7 +237,7 @@ function generateMonthlyGroupHTML(items, isNewWindow) {
     const monthlyGroups = {};
     items.forEach(item => {
         const date = new Date(item.added);
-        const key = \`${date.getFullYear()}-\${(date.getMonth() + 1).toString().padStart(2, '0')}\`; // "YYYY-MM"
+        const key = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
         if (!monthlyGroups[key]) monthlyGroups[key] = [];
         monthlyGroups[key].push(item);
     });
@@ -294,22 +247,22 @@ function generateMonthlyGroupHTML(items, isNewWindow) {
         const [year, month] = key.split('-');
         const itemsInMonth = monthlyGroups[key];
         const totalSize = itemsInMonth.reduce((sum, item) => sum + item.bytes, 0);
-        monthlyHTML += \`<details class="bg-gray-100 rounded-lg mb-2">
+        // ★★★ [수정됨] isNewWindow 파라미터를 renderTorrentItemHTML에 전달
+        monthlyHTML += `<details class="bg-gray-100 rounded-lg mb-2">
             <summary class="p-3 cursor-pointer font-semibold text-gray-800 flex justify-between items-center hover:bg-gray-200 rounded-t-lg">
-                <div><i class="fas fa-calendar-alt text-blue-500 mr-3"></i>\${year}년 \${parseInt(month, 10)}월</div>
-                <div class="text-sm font-normal text-gray-600">\${itemsInMonth.length}개 / \${formatSize(totalSize)}</div>
+                <div><i class="fas fa-calendar-alt text-blue-500 mr-3"></i>${year}년 ${parseInt(month, 10)}월</div>
+                <div class="text-sm font-normal text-gray-600">${itemsInMonth.length}개 / ${formatSize(totalSize)}</div>
             </summary>
-            <div class="p-2 border-t border-gray-300">\${itemsInMonth.map(t => renderTorrentItemHTML(t, isNewWindow)).join('')}</div>
-        </details>\`;
+            <div class="p-2 border-t border-gray-300">${itemsInMonth.map(t => renderTorrentItemHTML(t, isNewWindow)).join('')}</div>
+        </details>`;
     });
     return monthlyHTML;
 }
 
-
 /**
  * 자동 그룹화된 폴더 뷰 HTML 생성 (월별 그룹화 포함)
  */
-function generateAutomaticFolderViewHTML(torrents) {
+function generateAutomaticFolderViewHTML(torrents, isNewWindow) {
     const getGroupKey = (filename) => {
         let cleanName = filename.replace(/[._]/g, ' ');
         const patterns = [/S\d{1,2}E\d{1,3}/i, /E\d{1,3}/i, /\d{1,3}회/, /\d{1,3}화/, /\d{4}p/, /\b(19|20)\d{2}\b/, /BluRay|WEBRip|HDTV|x264|H264|x265|HEVC/i];
@@ -347,20 +300,20 @@ function generateAutomaticFolderViewHTML(torrents) {
         const items = groups[key];
         if (items.length > 1) {
             const totalSize = items.reduce((sum, item) => sum + item.bytes, 0);
-            html += \`<details class="bg-gray-100 rounded-lg mb-2">
+            // ★★★ [수정됨] details 태그에 open 속성 제거 (기본 닫힘)
+            html += `<details class="bg-gray-100 rounded-lg mb-2">
                 <summary class="p-3 cursor-pointer font-semibold text-gray-800 flex justify-between items-center hover:bg-gray-200 rounded-t-lg">
-                    <div><i class="fas fa-folder text-yellow-500 mr-3"></i>\${key}</div>
-                    <div class="text-sm font-normal text-gray-600">\${items.length}개 / \${formatSize(totalSize)}</div>
+                    <div><i class="fas fa-folder text-yellow-500 mr-3"></i>${key}</div>
+                    <div class="text-sm font-normal text-gray-600">${items.length}개 / ${formatSize(totalSize)}</div>
                 </summary>
-                <div class="p-2 border-t border-gray-300">\${items.map(t => renderTorrentItemHTML(t, true)).join('')}</div>
-            </details>\`;
+                <div class="p-2 border-t border-gray-300">${items.map(t => renderTorrentItemHTML(t, isNewWindow)).join('')}</div>
+            </details>`;
         } else {
             singles.push(...items);
         }
     });
     
-    // ★★★ [수정됨] 단일 항목들을 월별로 그룹화하여 HTML에 추가
-    html += generateMonthlyGroupHTML(singles, true);
+    html += generateMonthlyGroupHTML(singles, isNewWindow);
 
     return html;
 }
