@@ -1,8 +1,8 @@
 // ============== folder-view.js ==============
-// 새 창 폴더 뷰 및 가상 폴더 생성/관리 스크립트
+// (Persistent Virtual Folders Edition)
 
 /**
- * 새 창을 열고, 팝업 차단 시 사용자에게 안내합니다.
+ * 새 창을 열고, 그 안에 모든 UI와 로직(저장, 불러오기 등)을 주입합니다.
  */
 function openFolderViewInNewWindow() {
     if (lastFetchedTorrents.length === 0) {
@@ -18,19 +18,18 @@ function openFolderViewInNewWindow() {
         return;
     }
 
-    const initialViewHTML = generateAutomaticFolderViewHTML(lastFetchedTorrents);
-
+    // 새 창의 기본 HTML 구조. 여기에 모든 기능과 UI가 포함됩니다.
     const newWindowContent = `
         <!DOCTYPE html>
         <html lang="ko">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>토렌트 폴더 뷰</title>
+            <title>토렌트 가상 폴더 뷰</title>
             <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
             <style>
-                body { background-color: #f3f4f6; padding: 1.5rem; }
+                body { background-color: #f3f4f6; }
                 .btn-potplayer { background-color: #4b3279; color: white; } .btn-potplayer:hover { background-color: #5d3f99; }
                 .btn-stream { background-color: #8B5CF6; color: white; } .btn-stream:hover { background-color: #7C3AED; }
                 .btn-rdpage { background-color: #3B82F6; color: white; } .btn-rdpage:hover { background-color: #2563EB; }
@@ -40,34 +39,172 @@ function openFolderViewInNewWindow() {
                 .btn-delete { background-color: #EF4444; color: white; } .btn-delete:hover { background-color: #DC2626; }
                 details summary::-webkit-details-marker { display: none; }
                 details > summary { list-style: none; }
+                /* ★★★ 스크롤 따라다니는 버튼을 위한 스타일 ★★★ */
+                .sticky-controls {
+                    position: sticky;
+                    bottom: 1rem;
+                    right: 1rem;
+                    z-index: 50;
+                    display: flex;
+                    justify-content: flex-end;
+                    padding: 0.75rem;
+                    background-color: rgba(255, 255, 255, 0.8);
+                    backdrop-filter: blur(10px);
+                    border-radius: 0.5rem;
+                    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+                    width: fit-content;
+                    margin-left: auto;
+                    margin-top: 1rem;
+                }
             </style>
         </head>
         <body>
-            <div class="container mx-auto max-w-5xl">
+            <div class="container mx-auto max-w-5xl p-4">
                 <div class="flex justify-between items-center mb-4 border-b pb-2">
-                    <h1 class="text-2xl font-bold text-gray-800">토렌트 폴더 뷰 (${lastFetchedTorrents.length}개)</h1>
+                    <h1 class="text-2xl font-bold text-gray-800">토렌트 가상 폴더 뷰 (${lastFetchedTorrents.length}개)</h1>
                     <div class="flex gap-2 items-center">
-                         <button id="createFolderBtn" class="px-3 py-1 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 flex items-center" title="선택한 항목으로 가상 폴더 만들기">
-                            <i class="fas fa-folder-plus mr-2"></i>가상 폴더 만들기
+                        <!-- ★★★ 저장 / 불러오기 버튼 추가 ★★★ -->
+                        <button id="loadBtn" class="px-3 py-1 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 flex items-center" title="저장된 폴더 구조 불러오기">
+                            <i class="fas fa-upload mr-2"></i>불러오기
                         </button>
-                        <button id="cancelFolderBtn" class="px-3 py-1 bg-gray-500 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 hidden" title="취소">
-                            <i class="fas fa-times"></i>
+                        <button id="saveBtn" class="px-3 py-1 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 flex items-center" title="현재 폴더 구조 저장하기">
+                            <i class="fas fa-save mr-2"></i>저장
                         </button>
                     </div>
                 </div>
-                <div id="folderViewContainer">${initialViewHTML}</div>
+                <div id="folderViewContainer"></div>
+            </div>
+
+            <!-- ★★★ 스크롤 따라다니는 버튼 컨테이너 ★★★ -->
+            <div class="sticky-controls">
+                 <button id="createFolderBtn" class="px-3 py-1 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 flex items-center" title="선택한 항목으로 가상 폴더 만들기">
+                    <i class="fas fa-folder-plus mr-2"></i>가상 폴der 만들기
+                </button>
+                <button id="cancelFolderBtn" class="ml-2 px-3 py-1 bg-gray-500 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 hidden" title="취소">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
 
             <script>
-                // 새 창 내에서 동작할 스크립트
+                // =======================================================
+                //               새 창 내부에서 동작할 모든 스크립트
+                // =======================================================
                 let isFolderCreationMode = false;
+                let hasUnsavedChanges = false;
+                const LAYOUT_STORAGE_KEY = 'rdmex_virtual_folder_layout';
+                const opener = window.opener; // 원본 창 참조
 
+                // ★★★ 저장되지 않은 변경사항 경고
+                window.addEventListener('beforeunload', (e) => {
+                    if (hasUnsavedChanges) {
+                        e.preventDefault();
+                        e.returnValue = ''; // 대부분의 브라우저에서 이 설정이 필요
+                    }
+                });
+
+                // ★★★ 폴더 구조 저장
+                function saveLayout() {
+                    const container = document.getElementById('folderViewContainer');
+                    const layout = [];
+                    container.childNodes.forEach(node => {
+                        if (node.tagName === 'DETAILS') { // 가상 폴더
+                            const folder = {
+                                type: 'folder',
+                                name: node.querySelector('summary > div').textContent.trim(),
+                                items: []
+                            };
+                            node.querySelectorAll('.torrent-item-container').forEach(item => {
+                                folder.items.push(item.dataset.id);
+                            });
+                            layout.push(folder);
+                        } else if (node.classList && node.classList.contains('torrent-item-container')) { // 단일 항목
+                            layout.push({ type: 'single', id: node.dataset.id });
+                        }
+                    });
+
+                    localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(layout));
+                    hasUnsavedChanges = false;
+                    opener.showToast("폴더 구조가 저장되었습니다.", "success");
+                }
+
+                // ★★★ 저장된 폴더 구조 불러오기 (서버 목록과 동기화 포함)
+                function loadLayout() {
+                    if (hasUnsavedChanges && !confirm("저장되지 않은 변경사항이 있습니다. 정말로 불러오시겠습니까?")) {
+                        return;
+                    }
+
+                    const savedLayoutJSON = localStorage.getItem(LAYOUT_STORAGE_KEY);
+                    if (!savedLayoutJSON) {
+                        opener.showToast("저장된 폴더 구조가 없습니다.", "info");
+                        return;
+                    }
+
+                    const savedLayout = JSON.parse(savedLayoutJSON);
+                    const container = document.getElementById('folderViewContainer');
+                    container.innerHTML = ''; // 컨테이너 비우기
+
+                    const torrentsMap = new Map(opener.lastFetchedTorrents.map(t => [t.id, t]));
+                    const usedIds = new Set();
+
+                    // 저장된 레이아웃 기반으로 DOM 재구성
+                    savedLayout.forEach(entry => {
+                        if (entry.type === 'folder') {
+                            const folderContent = document.createElement('div');
+                            folderContent.className = 'p-2 border-t border-gray-300';
+                            let totalSize = 0;
+                            let liveItemsCount = 0;
+
+                            entry.items.forEach(id => {
+                                if (torrentsMap.has(id)) {
+                                    const torrent = torrentsMap.get(id);
+                                    folderContent.innerHTML += opener.renderTorrentItemHTML(torrent, true);
+                                    totalSize += torrent.bytes;
+                                    liveItemsCount++;
+                                    usedIds.add(id);
+                                }
+                            });
+
+                            if (liveItemsCount > 0) {
+                                const details = document.createElement('details');
+                                details.className = 'bg-gray-100 rounded-lg mb-2';
+                                details.innerHTML = \`<summary class="p-3 cursor-pointer font-semibold text-gray-800 flex justify-between items-center hover:bg-gray-200 rounded-t-lg">
+                                        <div><i class="fas fa-folder text-yellow-500 mr-3"></i>\${entry.name}</div>
+                                        <div class="text-sm font-normal text-gray-600">\${liveItemsCount}개 / \${opener.formatSize(totalSize)}</div>
+                                    </summary>\`;
+                                details.appendChild(folderContent);
+                                container.appendChild(details);
+                            }
+                        } else if (entry.type === 'single') {
+                            if (torrentsMap.has(entry.id)) {
+                                container.innerHTML += opener.renderTorrentItemHTML(torrentsMap.get(entry.id), true);
+                                usedIds.add(entry.id);
+                            }
+                        }
+                    });
+
+                    // 저장된 레이아웃에 없는 (새로 추가된) 항목들 렌더링
+                    const uncategorizedItems = opener.lastFetchedTorrents.filter(t => !usedIds.has(t.id));
+                    if (uncategorizedItems.length > 0) {
+                        const uncategorizedHeader = document.createElement('h2');
+                        uncategorizedHeader.className = 'text-lg font-semibold text-gray-600 mt-6 mb-2 border-b pb-1';
+                        uncategorizedHeader.textContent = '분류되지 않은 항목';
+                        container.appendChild(uncategorizedHeader);
+                        uncategorizedItems.forEach(t => {
+                            container.innerHTML += opener.renderTorrentItemHTML(t, true);
+                        });
+                    }
+                    
+                    hasUnsavedChanges = false;
+                    opener.showToast("저장된 폴더 구조를 불러왔습니다.", "success");
+                }
+
+                // 가상 폴더 생성 모드
                 function toggleFolderCreationMode() {
+                    isFolderCreationMode = !isFolderCreationMode;
                     const container = document.getElementById('folderViewContainer');
                     const items = container.querySelectorAll('.torrent-item');
                     const createBtn = document.getElementById('createFolderBtn');
                     const cancelBtn = document.getElementById('cancelFolderBtn');
-                    isFolderCreationMode = !isFolderCreationMode;
 
                     if (isFolderCreationMode) {
                         items.forEach(item => item.querySelector('.folder-checkbox').classList.remove('hidden'));
@@ -84,6 +221,7 @@ function openFolderViewInNewWindow() {
                     }
                 }
 
+                // 가상 폴더 만들기
                 function createVirtualFolder() {
                     const container = document.getElementById('folderViewContainer');
                     const selectedItems = container.querySelectorAll('.folder-checkbox:checked');
@@ -91,14 +229,12 @@ function openFolderViewInNewWindow() {
                         alert("먼저 하나 이상의 항목을 선택해주세요.");
                         return;
                     }
-
                     const folderName = prompt("생성할 가상 폴더의 이름을 입력하세요:", "새 폴더");
                     if (!folderName) return;
 
                     const folderContent = document.createElement('div');
                     folderContent.className = 'p-2 border-t border-gray-300';
                     let totalSize = 0;
-
                     selectedItems.forEach(checkbox => {
                         const itemContainer = checkbox.closest('.torrent-item-container');
                         folderContent.appendChild(itemContainer);
@@ -107,16 +243,22 @@ function openFolderViewInNewWindow() {
 
                     const details = document.createElement('details');
                     details.className = 'bg-gray-100 rounded-lg mb-2';
-                    details.open = true;
                     details.innerHTML = \`<summary class="p-3 cursor-pointer font-semibold text-gray-800 flex justify-between items-center hover:bg-gray-200 rounded-t-lg">
                             <div><i class="fas fa-folder text-yellow-500 mr-3"></i>\${folderName}</div>
-                            <div class="text-sm font-normal text-gray-600">\${selectedItems.length}개 / \${window.opener.formatSize(totalSize)}</div>
+                            <div class="text-sm font-normal text-gray-600">\${selectedItems.length}개 / \${opener.formatSize(totalSize)}</div>
                         </summary>\`;
                     details.appendChild(folderContent);
                     container.prepend(details);
                     toggleFolderCreationMode();
+                    hasUnsavedChanges = true; // ★★★ 변경사항 발생
                 }
-
+                
+                // 초기 뷰 렌더링
+                document.getElementById('folderViewContainer').innerHTML = opener.generateAutomaticFolderViewHTML(opener.lastFetchedTorrents);
+                
+                // 이벤트 리스너 연결
+                document.getElementById('saveBtn').addEventListener('click', saveLayout);
+                document.getElementById('loadBtn').addEventListener('click', loadLayout);
                 document.getElementById('createFolderBtn').addEventListener('click', () => {
                     if (isFolderCreationMode) createVirtualFolder();
                     else toggleFolderCreationMode();
@@ -146,18 +288,23 @@ function renderTorrentItemHTML(t, isNewWindow = false) {
     const progressBarColor = 'bg-blue-600';
     const formattedDate = new Date(t.added).toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
 
-    return `<div class="torrent-item-container" data-bytes="${t.bytes}">
+    // isNewWindow 여부에 따라 다른 get/format 함수를 호출하도록 수정
+    const statusClassFunc = isNewWindow ? opener.getStatusClass : getStatusClass;
+    const statusTextFunc = isNewWindow ? opener.getStatusText : getStatusText;
+    const formatSizeFunc = isNewWindow ? opener.formatSize : formatSize;
+
+    return `<div class="torrent-item-container" data-id="${t.id}" data-bytes="${t.bytes}">
         <div class="torrent-item border-b border-gray-200 p-3 hover:bg-gray-200 transition duration-200 flex items-center">
             <input type="checkbox" class="folder-checkbox hidden w-5 h-5 mr-4 cursor-pointer">
             <div class="flex-grow">
                 <div class="flex justify-between items-start mb-2"> 
                     <h3 class="font-semibold text-gray-800 flex-1 mr-4 overflow-hidden text-ellipsis whitespace-nowrap min-w-0" title="${t.filename}">${t.filename || "Unknown"}</h3> 
-                    <span class="px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${window.opener ? window.opener.getStatusClass(t.status) : getStatusClass(t.status)}">${window.opener ? window.opener.getStatusText(t.status) : getStatusText(t.status)}</span> 
+                    <span class="px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${statusClassFunc(t.status)}">${statusTextFunc(t.status)}</span> 
                 </div> 
                 <div class="flex justify-between items-center text-sm text-gray-600 mb-3">
                     <div class="flex items-center gap-x-4">
-                        <span><i class="fas fa-hdd mr-1 text-gray-400"></i> ${window.opener ? window.opener.formatSize(t.bytes) : formatSize(t.bytes)}</span>
-                        <span><i class="fas fa-arrow-down mr-1 text-green-500"></i> ${window.opener ? window.opener.formatSize(t.speed || 0) : formatSize(t.speed || 0)}/s</span>
+                        <span><i class="fas fa-hdd mr-1 text-gray-400"></i> ${formatSizeFunc(t.bytes)}</span>
+                        <span><i class="fas fa-arrow-down mr-1 text-green-500"></i> ${formatSizeFunc(t.speed || 0)}/s</span>
                     </div>
                     <div class="text-right whitespace-nowrap"><i class="fas fa-clock mr-1 text-gray-400"></i><span>${formattedDate}</span></div>
                 </div>
@@ -212,9 +359,9 @@ function generateAutomaticFolderViewHTML(torrents) {
         const items = groups[key];
         if (items.length > 1) {
             const totalSize = items.reduce((sum, item) => sum + item.bytes, 0);
-            html += `<details open class="bg-gray-100 rounded-lg mb-2">
+            html += `<details class="bg-gray-100 rounded-lg mb-2">
                 <summary class="p-3 cursor-pointer font-semibold text-gray-800 flex justify-between items-center hover:bg-gray-200 rounded-t-lg">
-                    <div><i class="fas fa-folder-open text-yellow-500 mr-3"></i>${key}</div>
+                    <div><i class="fas fa-folder text-yellow-500 mr-3"></i>${key}</div>
                     <div class="text-sm font-normal text-gray-600">${items.length}개 / ${formatSize(totalSize)}</div>
                 </summary>
                 <div class="p-2 border-t border-gray-300">${items.map(t => renderTorrentItemHTML(t, true)).join('')}</div>

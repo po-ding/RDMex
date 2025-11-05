@@ -3,7 +3,6 @@ const API_BASE = "https://api.real-debrid.com/rest/1.0";
 let refreshTimer = null;
 let fastRefreshCount = 0;
 let slowRefreshCount = 0;
-// let lastFetchedTorrents = []; // 이 변수는 이제 folder-view.js에서 관리합니다.
 
 // (모든 보조 함수들: addLog, showToast, setLoading, getStatusClass, getStatusText, formatSize, isMobile)
 function addLog(message, type = "info") { const logEl = document.getElementById("statusLog"); const time = new Date().toLocaleTimeString(); const iconClass = type === "error" ? "fa-times-circle text-red-500" : type === "success" ? "fa-check-circle text-green-500" : type === "warning" ? "fa-exclamation-triangle text-yellow-500" : "fa-info-circle text-blue-500"; const initialMsg = document.getElementById("initialLogMessage"); if (initialMsg) initialMsg.remove(); const entry = document.createElement("div"); entry.className = `mb-2 p-2 border-l-4 ${type === "error" ? "border-red-400 bg-red-50" : type === "success" ? "border-green-400 bg-green-50" : type === "warning" ? "border-yellow-400 bg-yellow-50" : "border-blue-400 bg-blue-50"}`; entry.innerHTML = `<span class="text-xs text-gray-500">[${time}]</span> <i class="fas ${iconClass} ml-2 mr-2"></i> <span>${message}</span>`; logEl.appendChild(entry); logEl.scrollTop = logEl.scrollHeight; }
