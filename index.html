@@ -77,7 +77,12 @@
         <!-- Left Column: Torrent List -->
         <div class="bg-white rounded-lg shadow-lg">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
-                <h2 class="text-xl font-semibold text-gray-800"><i class="fas fa-list mr-2 text-blue-500"></i>토렌트 목록</h2>
+                <div class="flex items-center gap-3">
+                    <h2 class="text-xl font-semibold text-gray-800"><i class="fas fa-list mr-2 text-blue-500"></i>토렌트 목록</h2>
+                    <span id="viewModeIcon" class="cursor-pointer text-gray-500 hover:text-blue-600 transition-colors" title="폴더 뷰로 전환">
+                        <i class="fas fa-folder text-xl"></i>
+                    </span>
+                </div>
                 <div class="flex gap-2">
                     <button onclick="refreshTorrents()" class="px-3 py-1 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700" title="새로고침"><i class="fas fa-sync-alt"></i></button>
                     <button onclick="deleteCompleted()" class="px-3 py-1 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700" title="완료된 항목 모두 삭제"><i class="fas fa-trash"></i></button>
@@ -85,41 +90,6 @@
             </div>
             <div id="torrentList" class="p-2" style="min-height: 600px; max-height: 80vh; overflow-y: auto;">
                 <p class="text-gray-500 text-center py-8">토렌트 목록을 불러오려면 새로고침 버튼을 클릭하세요.</p>
-
-                <!-- 
-                  [ 개발자 참고 ]
-                  app.js에서 각 토렌트 항목을 생성할 때 아래와 같은 구조를 사용해주세요.
-                  날짜/시간 관련 div가 완전히 제거되었습니다.
-                -->
-                <!--
-                <div class="border-b py-3 px-2">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="font-semibold text-gray-800 text-sm break-all pr-2">신발 벗고 돌싱포맨.E205.251021.1080p.H264-F1RST.mp4</h3>
-                        <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full whitespace-nowrap">완료</span>
-                    </div>
-
-                    <div class="flex justify-between items-center text-xs text-gray-500 mb-2">
-                        <div class="flex items-center gap-x-4">
-                            <span><i class="fas fa-hdd mr-1"></i>1.43 GB</span>
-                            <span><i class="fas fa-arrow-down mr-1"></i>0 B/s</span>
-                        </div>
-                    </div>
-
-                    <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
-                        <div class="bg-blue-600 h-2 rounded-full" style="width: 100%"></div>
-                    </div>
-
-                    <div class="flex items-center justify-end gap-1.5">
-                        <button class="btn-potplayer px-2.5 py-1.5 rounded text-xs"><i class="fas fa-play"></i></button>
-                        <button class="btn-stream px-2.5 py-1.5 rounded text-xs"><i class="fas fa-desktop"></i></button>
-                        <button class="btn-rdpage px-2.5 py-1.5 rounded text-xs"><i class="fas fa-external-link-alt"></i></button>
-                        <button class="btn-download px-2.5 py-1.5 rounded text-xs"><i class="fas fa-download"></i></button>
-                        <button class="btn-link px-2.5 py-1.5 rounded text-xs"><i class="fas fa-link"></i></button>
-                        <button class="btn-hide px-2.5 py-1.5 rounded text-xs"><i class="fas fa-eye-slash"></i></button>
-                        <button class="btn-delete px-2.5 py-1.5 rounded text-xs"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-                -->
             </div>
         </div>
 
@@ -181,7 +151,10 @@
     <script src="bencode.js"></script>
     <script src="src/base32.js"></script>
     
-    <!-- Main Application Script -->
+    <!-- Application Scripts -->
+    <!-- ▼▼▼ 분리된 폴더 뷰 스크립트를 먼저 로드 ▼▼▼ -->
+    <script src="folder-view.js"></script>
+    <!-- ▲▲▲ 로드 완료 ▲▲▲ -->
     <script src="app.js"></script>
     
     <!-- API Token Visibility Script -->
